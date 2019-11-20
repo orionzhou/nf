@@ -1,9 +1,12 @@
 # Project directories
 cache
 data
-data2
 logs
-singularity_containers
+igenomes
+singularity
+conda
+work
+temp
 
 # app temp files
 .snakemake/*
