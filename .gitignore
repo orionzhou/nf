@@ -2,11 +2,14 @@
 cache
 data
 logs
+assets
 igenomes
 singularity
+results*
 conda
 work
 temp
+.nextflow*
 
 # app temp files
 .snakemake/*
