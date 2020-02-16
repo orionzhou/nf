@@ -1,0 +1,7 @@
+group,replicate,fastq_1,fastq_2
+leaf,2,/scratch.global/zhoux379/barn/data/fastq/ca19a5/SRR7889754.fq.gz,
+leaf,1,/scratch.global/zhoux379/barn/data/fastq/ca19a5/SRR7889755.fq.gz,
+ear,4,/scratch.global/zhoux379/barn/data/fastq/ca19a5/SRR7889756.fq.gz,
+ear,3,/scratch.global/zhoux379/barn/data/fastq/ca19a5/SRR7889757.fq.gz,
+ear,2,/scratch.global/zhoux379/barn/data/fastq/ca19a5/SRR7889758.fq.gz,
+ear,1,/scratch.global/zhoux379/barn/data/fastq/ca19a5/SRR7889759.fq.gz,

@@ -1,0 +1,17 @@
+group,replicate,fastq_1,fastq_2
+root_heavy,2,/scratch.global/zhoux379/barn/data/fastq/cm16a/SRR2531556_1.fq.gz,/scratch.global/zhoux379/barn/data/fastq/cm16a/SRR2531556_2.fq.gz
+root_heavy,2,/scratch.global/zhoux379/barn/data/fastq/cm16a/SRR2531584_1.fq.gz,/scratch.global/zhoux379/barn/data/fastq/cm16a/SRR2531584_2.fq.gz
+root_heavy,2,/scratch.global/zhoux379/barn/data/fastq/cm16a/SRR2531586_1.fq.gz,/scratch.global/zhoux379/barn/data/fastq/cm16a/SRR2531586_2.fq.gz
+root_heavy,2,/scratch.global/zhoux379/barn/data/fastq/cm16a/SRR2531759_1.fq.gz,/scratch.global/zhoux379/barn/data/fastq/cm16a/SRR2531759_2.fq.gz
+root_heavy,2,/scratch.global/zhoux379/barn/data/fastq/cm16a/SRR2531764_1.fq.gz,/scratch.global/zhoux379/barn/data/fastq/cm16a/SRR2531764_2.fq.gz
+root_heavy,2,/scratch.global/zhoux379/barn/data/fastq/cm16a/SRR2531768_1.fq.gz,/scratch.global/zhoux379/barn/data/fastq/cm16a/SRR2531768_2.fq.gz
+root_heavy,2,/scratch.global/zhoux379/barn/data/fastq/cm16a/SRR2531773_1.fq.gz,/scratch.global/zhoux379/barn/data/fastq/cm16a/SRR2531773_2.fq.gz
+root_heavy,2,/scratch.global/zhoux379/barn/data/fastq/cm16a/SRR2531774_1.fq.gz,/scratch.global/zhoux379/barn/data/fastq/cm16a/SRR2531774_2.fq.gz
+root_light,1,/scratch.global/zhoux379/barn/data/fastq/cm16a/SRR2542694_1.fq.gz,/scratch.global/zhoux379/barn/data/fastq/cm16a/SRR2542694_2.fq.gz
+root_light,2,/scratch.global/zhoux379/barn/data/fastq/cm16a/SRR2542695_1.fq.gz,/scratch.global/zhoux379/barn/data/fastq/cm16a/SRR2542695_2.fq.gz
+root_heavy,1,/scratch.global/zhoux379/barn/data/fastq/cm16a/SRR2542696_1.fq.gz,/scratch.global/zhoux379/barn/data/fastq/cm16a/SRR2542696_2.fq.gz
+root_heavy,2,/scratch.global/zhoux379/barn/data/fastq/cm16a/SRR2542697_1.fq.gz,/scratch.global/zhoux379/barn/data/fastq/cm16a/SRR2542697_2.fq.gz
+shoot_heavy,1,/scratch.global/zhoux379/barn/data/fastq/cm16a/SRR2542698_1.fq.gz,/scratch.global/zhoux379/barn/data/fastq/cm16a/SRR2542698_2.fq.gz
+shoot_light,2,/scratch.global/zhoux379/barn/data/fastq/cm16a/SRR2542699_1.fq.gz,/scratch.global/zhoux379/barn/data/fastq/cm16a/SRR2542699_2.fq.gz
+shoot_light,1,/scratch.global/zhoux379/barn/data/fastq/cm16a/SRR2542700_1.fq.gz,/scratch.global/zhoux379/barn/data/fastq/cm16a/SRR2542700_2.fq.gz
+shoot_heavy,2,/scratch.global/zhoux379/barn/data/fastq/cm16a/SRR2542701_1.fq.gz,/scratch.global/zhoux379/barn/data/fastq/cm16a/SRR2542701_2.fq.gz

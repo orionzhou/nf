@@ -1,0 +1,12 @@
+group,replicate,fastq_1,fastq_2,antibody,control
+RNAPII,2,/scratch.global/zhoux379/barn/data/fastq/cp19b/SRR9016265_1.fq.gz,/scratch.global/zhoux379/barn/data/fastq/cp19b/SRR9016265_2.fq.gz,RNAPII,input
+H3K27ac,1,/scratch.global/zhoux379/barn/data/fastq/cp19b/SRR9016266_1.fq.gz,/scratch.global/zhoux379/barn/data/fastq/cp19b/SRR9016266_2.fq.gz,H3K27ac,input
+H3K4me1,1,/scratch.global/zhoux379/barn/data/fastq/cp19b/SRR9016267_1.fq.gz,/scratch.global/zhoux379/barn/data/fastq/cp19b/SRR9016267_2.fq.gz,H3K4me1,input
+RNAPII,1,/scratch.global/zhoux379/barn/data/fastq/cp19b/SRR9016268_1.fq.gz,/scratch.global/zhoux379/barn/data/fastq/cp19b/SRR9016268_2.fq.gz,RNAPII,input
+H3K27me3,1,/scratch.global/zhoux379/barn/data/fastq/cp19b/SRR9016269_1.fq.gz,/scratch.global/zhoux379/barn/data/fastq/cp19b/SRR9016269_2.fq.gz,H3K27me3,input
+H3K4me3,1,/scratch.global/zhoux379/barn/data/fastq/cp19b/SRR9016270_1.fq.gz,/scratch.global/zhoux379/barn/data/fastq/cp19b/SRR9016270_2.fq.gz,H3K4me3,input
+input,1,/scratch.global/zhoux379/barn/data/fastq/cp19b/SRR9016273_1.fq.gz,/scratch.global/zhoux379/barn/data/fastq/cp19b/SRR9016273_2.fq.gz,,
+H3K27ac,2,/scratch.global/zhoux379/barn/data/fastq/cp19b/SRR9016279_1.fq.gz,/scratch.global/zhoux379/barn/data/fastq/cp19b/SRR9016279_2.fq.gz,H3K27ac,input
+H3K27me3,2,/scratch.global/zhoux379/barn/data/fastq/cp19b/SRR9016280_1.fq.gz,/scratch.global/zhoux379/barn/data/fastq/cp19b/SRR9016280_2.fq.gz,H3K27me3,input
+H3K4me3,2,/scratch.global/zhoux379/barn/data/fastq/cp19b/SRR9016281_1.fq.gz,/scratch.global/zhoux379/barn/data/fastq/cp19b/SRR9016281_2.fq.gz,H3K4me3,input
+H3K4me1,2,/scratch.global/zhoux379/barn/data/fastq/cp19b/SRR9016282_1.fq.gz,/scratch.global/zhoux379/barn/data/fastq/cp19b/SRR9016282_2.fq.gz,H3K4me1,input

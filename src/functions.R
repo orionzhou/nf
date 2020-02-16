@@ -29,6 +29,8 @@ get_fastq <- function(sid, paired, read1, yid) {
 
 read_samplelist <- function(yid, diri = '~/projects/barn/data/15_read_list')
     read_tsv(sprintf("%s/%s.tsv", diri, yid))
+read_design <- function(yid, diri = '~/projects/nf/data/design')
+    read_csv(sprintf("%s/%s.csv", diri, yid))
 
 
 

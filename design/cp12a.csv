@@ -1,0 +1,3 @@
+group,replicate,fastq_1,fastq_2,antibody,control
+ear1_kn1,1,/scratch.global/zhoux379/barn/data/fastq/cp12a/SRR518979.fq.gz,,,
+ear1_control,1,/scratch.global/zhoux379/barn/data/fastq/cp12a/SRR518980.fq.gz,,kn1,ear1_kn1

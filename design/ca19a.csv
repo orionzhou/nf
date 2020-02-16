@@ -1,0 +1,7 @@
+group,replicate,fastq_1,fastq_2
+leaf,1,/scratch.global/zhoux379/barn/data/fastq/ca19a/SRR7889827_1.fq.gz,/scratch.global/zhoux379/barn/data/fastq/ca19a/SRR7889827_2.fq.gz
+leaf,1,/scratch.global/zhoux379/barn/data/fastq/ca19a/SRR7889828_1.fq.gz,/scratch.global/zhoux379/barn/data/fastq/ca19a/SRR7889828_2.fq.gz
+ear,1,/scratch.global/zhoux379/barn/data/fastq/ca19a/SRR7889829_1.fq.gz,/scratch.global/zhoux379/barn/data/fastq/ca19a/SRR7889829_2.fq.gz
+ear,1,/scratch.global/zhoux379/barn/data/fastq/ca19a/SRR7889830_1.fq.gz,/scratch.global/zhoux379/barn/data/fastq/ca19a/SRR7889830_2.fq.gz
+input,1,/scratch.global/zhoux379/barn/data/fastq/ca19a/SRR7889831_1.fq.gz,/scratch.global/zhoux379/barn/data/fastq/ca19a/SRR7889831_2.fq.gz
+input,2,/scratch.global/zhoux379/barn/data/fastq/ca19a/SRR7889832_1.fq.gz,/scratch.global/zhoux379/barn/data/fastq/ca19a/SRR7889832_2.fq.gz

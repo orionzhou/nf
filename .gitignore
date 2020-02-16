@@ -1,6 +1,5 @@
 # Project directories
 cache
-data
 logs
 assets
 igenomes
@@ -8,8 +7,13 @@ singularity
 results*
 conda
 work
+run
 temp
+multiqc
+out
 .nextflow*
+
+data/*
 
 # app temp files
 .snakemake/*

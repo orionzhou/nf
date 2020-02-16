@@ -1,0 +1,3 @@
+group,replicate,fastq_1,fastq_2,antibody,control
+o2,1,/scratch.global/zhoux379/barn/data/fastq/cp15b/SRR1698462_1.fq.gz,/scratch.global/zhoux379/barn/data/fastq/cp15b/SRR1698462_2.fq.gz,o2,IgG
+IgG,1,/scratch.global/zhoux379/barn/data/fastq/cp15b/SRR1698463_1.fq.gz,/scratch.global/zhoux379/barn/data/fastq/cp15b/SRR1698463_2.fq.gz,,
