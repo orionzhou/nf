@@ -1,5 +1,0 @@
-group,replicate,fastq_1,fastq_2,antibody,control
-control,2,/scratch.global/zhoux379/barn/data/fastq/cp18a/SRR7153132_1.fq.gz,/scratch.global/zhoux379/barn/data/fastq/cp18a/SRR7153132_2.fq.gz,o2,o2
-control,1,/scratch.global/zhoux379/barn/data/fastq/cp18a/SRR7153133_1.fq.gz,/scratch.global/zhoux379/barn/data/fastq/cp18a/SRR7153133_2.fq.gz,o2,o2
-o2,2,/scratch.global/zhoux379/barn/data/fastq/cp18a/SRR7153134_1.fq.gz,/scratch.global/zhoux379/barn/data/fastq/cp18a/SRR7153134_2.fq.gz,,
-o2,1,/scratch.global/zhoux379/barn/data/fastq/cp18a/SRR7153135_1.fq.gz,/scratch.global/zhoux379/barn/data/fastq/cp18a/SRR7153135_2.fq.gz,,

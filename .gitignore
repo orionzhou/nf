@@ -12,6 +12,7 @@ temp
 multiqc
 out
 .nextflow*
+results
 
 data/*
 

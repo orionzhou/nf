@@ -1,9 +1,0 @@
-group,replicate,fastq_1,fastq_2,antibody,control
-shoot_H3K4me3,1,/scratch.global/zhoux379/barn/data/fastq/cp19a/SRR7741920_1.fq.gz,/scratch.global/zhoux379/barn/data/fastq/cp19a/SRR7741920_2.fq.gz,H3K4me3,
-shoot_H3K4me3,2,/scratch.global/zhoux379/barn/data/fastq/cp19a/SRR7741921_1.fq.gz,/scratch.global/zhoux379/barn/data/fastq/cp19a/SRR7741921_2.fq.gz,H3K4me3,
-shoot_H3K27ac,1,/scratch.global/zhoux379/barn/data/fastq/cp19a/SRR7741922_1.fq.gz,/scratch.global/zhoux379/barn/data/fastq/cp19a/SRR7741922_2.fq.gz,H3K27ac,
-shoot_H3K27ac,2,/scratch.global/zhoux379/barn/data/fastq/cp19a/SRR7741923_1.fq.gz,/scratch.global/zhoux379/barn/data/fastq/cp19a/SRR7741923_2.fq.gz,H3K27ac,
-ear_H3K4me3,1,/scratch.global/zhoux379/barn/data/fastq/cp19a/SRR7741924_1.fq.gz,/scratch.global/zhoux379/barn/data/fastq/cp19a/SRR7741924_2.fq.gz,H3K4me3,
-ear_H3K4me3,2,/scratch.global/zhoux379/barn/data/fastq/cp19a/SRR7741925_1.fq.gz,/scratch.global/zhoux379/barn/data/fastq/cp19a/SRR7741925_2.fq.gz,H3K4me3,
-ear_H3K27ac,1,/scratch.global/zhoux379/barn/data/fastq/cp19a/SRR7741926_1.fq.gz,/scratch.global/zhoux379/barn/data/fastq/cp19a/SRR7741926_2.fq.gz,H3K27ac,
-ear_H3K27ac,2,/scratch.global/zhoux379/barn/data/fastq/cp19a/SRR7741927_1.fq.gz,/scratch.global/zhoux379/barn/data/fastq/cp19a/SRR7741927_2.fq.gz,H3K27ac,

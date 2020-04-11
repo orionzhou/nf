@@ -24,24 +24,38 @@ def nf_start(args):
         print("working on %s" % yid)
         nf_start_one(yid, args)
 
-def nf_start_one(yid, args):
+def nf_start_one_2(yid, args):
     fi = "%s/%s.tsv" % (args.metadir, yid)
-    fo = "%s/%s.csv" % (args.dsgdir, yid)
     sl = read_samplelist(fi)
     cols = sl.columns.values.tolist()
     cnts = sl["paired"].value_counts(sort=True, dropna=True)
     paired, cnt = cnts.index[0], cnts.values[0]
     if cnts.size > 1:
-        print("    warning: mix of single and paired reads - only taking %s reads")
+        cnts2 = cnts.sort_index()
+        print("    warning: mix of single-end [%d] and paired-end [%d] reads" % (cnts2.values[0], cnts2.values[1]))
+        if args.pair != 'auto':
+            paired = True if args.pair == 'paired' else False
+            cnt = cnts2.values[1] if args.pair == 'paired' else cnts2.values[0]
     paired_str = "paired" if paired else "single"
-    print("    proceeding with %d %s reads" % (cnt, paired_str))
+    print("    proceeding with %d %s-end reads" % (cnt, paired_str))
 
     if args.lib == 'smrnaseq' and paired:
         print("    %s reads not supported for lib[%s]" % (paired_str, args.lib))
         sys.exit(1)
+    pre = yid
+    if args.pair != 'auto':
+        pre1 = 'pe' if args.pair == 'paired' else 'se'
+        pre = "%s_%s" % (pre, pre1)
+
+    fo = "%s/%s.tsv" % (args.dsgdir, pre)
     fho = must_open(fo, 'w')
+    if paired:
+        fho.write("SampleID\tGenotype\tfastq1\tfastq2\n")
+    else:
+        fho.write("SampleID\tGenotype\tfastq\n")
     for i in range(len(sl)):
         sid, paired0 = sl['SampleID'][i], sl['paired'][i]
+        gt = sl['Genotype'][i]
         if paired0 != paired: continue
         if args.lib in ['chipseq', 'dapseq']:
             print("libtype[%s] not supported yet" % lib)
@@ -51,17 +65,57 @@ def nf_start_one(yid, args):
             f2 = "%s/%s/%s_2.fq.gz" % (args.seqdir, yid, sid)
             assert op.isfile(f1), "fastq not found: %s" % f1
             assert op.isfile(f2), "fastq not found: %s" % f2
-            fho.write("%s,%s,%s\n" % (sid, f1, f2))
+            fho.write("\t".join([sid, gt, f1, f2]) + '\n')
         else:
             f1 = "%s/%s/%s.fq.gz" % (args.seqdir, yid, sid)
             assert op.isfile(f1), "fastq not found: %s" % f1
-            fho.write("%s,%s\n" % (sid, f1))
+            fho.write("\t".join([sid, gt, f1]) + '\n')
     fho.close()
 
     ft = "%s/tmpl.%s.nf" % (args.cfgdir, args.lib)
     fht = must_open(ft, 'r')
     tmp = Template(fht.read())
-    msg = tmp.render(yid = yid, singleEnd = str(not paired).lower())
+    msg = tmp.render(yid = pre, singleEnd = str(not paired).lower(),
+                     ase = str(args.ase).lower(),
+                     ril = str(args.ril).lower())
+    fc = "%s/%s.nf" % (args.cfgdir, pre)
+    fhc = must_open(fc, 'w')
+    fhc.write(msg)
+    fhc.close()
+
+    os.chdir(args.rundir)
+    if not op.isdir(pre):
+        sh("rm -f %s" % pre)
+        sh("mkdir %s" % pre)
+    os.chdir(pre)
+    fn = 'nextflow.config'
+    if op.exists(fn):
+        sh("rm -rf %s" % fn)
+    sh("ln -sf %s %s" % (fc, fn))
+
+def nf_start_one(yid, args):
+    fi = "%s/%s.tsv" % (args.metadir, yid)
+    sl = read_samplelist(fi)
+    for i in range(len(sl)):
+        sid, paired = sl['SampleID'][i], sl['paired'][i]
+        if paired:
+            f1 = "%s/%s/%s_1.fq.gz" % (args.seqdir, yid, sid)
+            f2 = "%s/%s/%s_2.fq.gz" % (args.seqdir, yid, sid)
+            assert op.isfile(f1), "fastq not found: %s" % f1
+            assert op.isfile(f2), "fastq not found: %s" % f2
+        else:
+            f1 = "%s/%s/%s.fq.gz" % (args.seqdir, yid, sid)
+            assert op.isfile(f1), "fastq not found: %s" % f1
+
+    ft = "%s/tmpl.%s.nf" % (args.cfgdir, args.lib)
+    fht = must_open(ft, 'r')
+    tmp = Template(fht.read())
+    srd = str(args.strand).lower()
+    if srd != 'false': srd = "'%s'" % srd
+    msg = tmp.render(yid = yid,
+                     strand = srd,
+                     ase = str(args.ase).lower(),
+                     ril = str(args.ril).lower())
     fc = "%s/%s.nf" % (args.cfgdir, yid)
     fhc = must_open(fc, 'w')
     fhc.write(msg)
@@ -77,6 +131,9 @@ def nf_start_one(yid, args):
         sh("rm -rf %s" % fn)
     sh("ln -sf %s %s" % (fc, fn))
 
+    if not args.keep:
+        sh("rm -rf %s/%s" % (args.rawdir, yid))
+
 def nf_publish(args):
     for yid in args.yid.split(","):
         print("working on %s" % yid)
@@ -86,6 +143,9 @@ def nf_publish_one(yid, args):
     diri1, fi1 = '', ''
     if args.lib in ['rnaseq']:
         diri1 = "%s/%s/MultiQC" % (args.rawdir, yid)
+        fi1 = "%s/%s_multiqc_report.html" % (diri1, yid)
+    elif args.lib in ['chipseq']:
+        diri1 = "%s/%s/multiqc/broadPeak" % (args.rawdir, yid)
         fi1 = "%s/%s_multiqc_report.html" % (diri1, yid)
     else:
         print("libtype[%s] not supported yet" % lib)
@@ -109,6 +169,17 @@ def nf_publish_one(yid, args):
         print("    multiqc.html too large to publish")
     else:
         sh("cp -f %s %s" % (fi1, fo1))
+
+def nf_clean(args):
+    os.chdir(args.workdir)
+    for yid in args.yid.split(","):
+        print("cleanup %s workdir" % yid)
+        sh("rm -rf %s" % yid)
+    if args.fq:
+        os.chdir(args.seqdir)
+        for yid in args.yid.split(","):
+            print("cleanup %s seqdir" % yid)
+            sh("rm -rf %s" % yid)
 
 def cpnf(args):
     tags = args.tags.split(",")
@@ -141,6 +212,12 @@ if __name__ == "__main__":
     sp1.add_argument('--rundir', default='/home/springer/zhoux379/projects/nf/run', help = 'nextflow run dir')
     sp1.add_argument('--dsgdir', default='/home/springer/zhoux379/projects/nf/design', help = 'nextflow design/input dir')
     sp1.add_argument('--cfgdir', default='/home/springer/zhoux379/projects/nf/configs/projects', help = 'nextflow config dir')
+    sp1.add_argument('--rawdir', default='/home/springer/zhoux379/projects/nf/raw', help = 'nextflow raw dir')
+    sp1.add_argument('--strand', default='false', help = 'read strandedness')
+    sp1.add_argument('--pair', default='auto', choices=['auto','single','paired'], help = 'force specify paired end option')
+    sp1.add_argument('--ase', action='store_true', help = 'allele specific expression?')
+    sp1.add_argument('--ril', action='store_true', help = 'genotype (RIL) samples?')
+    sp1.add_argument('--keep', action='store_true', help = 'keep previous results?')
     sp1.set_defaults(func = nf_start)
 
     sp1 = sp.add_parser("publish",
@@ -154,6 +231,15 @@ if __name__ == "__main__":
     sp1.add_argument('--mqcdir', default='/home/springer/zhoux379/projects/nf/multiqc', help = 'multiqc dir')
     sp1.add_argument('--webdir', default='/home/springer/zhoux379/git/orionzhou.github.io/public/multiqc', help = 'website dir')
     sp1.set_defaults(func = nf_publish)
+
+    sp1 = sp.add_parser("clean",
+            formatter_class = argparse.ArgumentDefaultsHelpFormatter,
+            help = "clean nextflow work directory")
+    sp1.add_argument('yid', help = 'study/project ID(s) separated by comma')
+    sp1.add_argument('--workdir', default='/home/springer/zhoux379/projects/nf/work', help = 'nextflow work dir')
+    sp1.add_argument('--seqdir', default='/scratch.global/zhoux379/barn/data/fastq', help = 'seq dir')
+    sp1.add_argument('--fq', action='store_true', help = 'remove fastq')
+    sp1.set_defaults(func = nf_clean)
 
     sp1 = sp.add_parser("cpnf",
             formatter_class = argparse.ArgumentDefaultsHelpFormatter,

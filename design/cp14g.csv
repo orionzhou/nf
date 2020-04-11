@@ -1,9 +1,0 @@
-group,replicate,fastq_1,fastq_2,antibody,control
-tassel_HA_ra1,1,/scratch.global/zhoux379/barn/data/fastq/cp14g/SRR999064.fq.gz,,,
-tassel_YFP_ra1,1,/scratch.global/zhoux379/barn/data/fastq/cp14g/SRR999065.fq.gz,,,
-tassel_HA_control,1,/scratch.global/zhoux379/barn/data/fastq/cp14g/SRR999066.fq.gz,,ra1,tassel_HA_ra1
-tassel_YFP_control,1,/scratch.global/zhoux379/barn/data/fastq/cp14g/SRR999067.fq.gz,,ra1,tassel_YFP_ra1
-ear_HA_ra1,1,/scratch.global/zhoux379/barn/data/fastq/cp14g/SRR999068.fq.gz,,,
-ear_YFP_ra1,1,/scratch.global/zhoux379/barn/data/fastq/cp14g/SRR999069.fq.gz,,,
-ear_HA_control,1,/scratch.global/zhoux379/barn/data/fastq/cp14g/SRR999070.fq.gz,,ra1,ear_HA_ra1
-ear_YFP_control,1,/scratch.global/zhoux379/barn/data/fastq/cp14g/SRR999071.fq.gz,,ra1,ear_YFP_ra1

@@ -1,4 +1,5 @@
-env.NXF_HOME = '/home/springer/zhoux379/projects/nf/run/rn18g'
+launchDir = '/home/springer/zhoux379/projects/nf/run/rn18g'
+workDir = '/home/springer/zhoux379/projects/nf/work/rn18g'
 
 includeConfig '/home/springer/zhoux379/projects/nf/configs/nextflow.config'
 includeConfig '/home/springer/zhoux379/projects/nf/configs/rnaseq.config'
@@ -7,14 +8,13 @@ params {
   profile = 'msi'
   genome = 'Zmays_B73'
   name = 'rn18g'
-  input = "../../design/${params.name}.csv"
-  singleEnd = false
+  design = "/home/springer/zhoux379/projects/barn/data/15_read_list/${params.name}.tsv"
   outdir = "../../raw/${params.name}"
-  skipPreseq = true
+  stranded = 'reverse'
+  ase = true
+  ril = false
 }
 
-// Function to ensure that resource requirements don't go beyond
-// a maximum limit
 def check_max(obj, type) {
   if (type == 'memory') {
     try {
