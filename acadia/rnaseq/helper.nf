@@ -1,4 +1,4 @@
-include '../modules/utils.nf'
+include {show_header; prep_params_genome} from '../modules/utils.nf'
 
 def help() {
   log.info showHeader()
@@ -33,14 +33,14 @@ def help() {
     --gencode                     Use fc_group_features_type = 'gene_type' and pass '--gencode' flag to Salmon
 
   Trimming:
-    --skipTrimming                Skip Trim Galore step
+    --skip_trimming               Skip Trim Galore step
     --clip_r1 [int]               Instructs Trim Galore to remove bp from the 5' end of read 1 (or single-end reads)
     --clip_r2 [int]               Instructs Trim Galore to remove bp from the 5' end of read 2 (paired-end reads only)
     --three_prime_clip_r1 [int]   Instructs Trim Galore to remove bp from the 3' end of read 1 AFTER adapter/quality trimming has been performed
     --three_prime_clip_r2 [int]   Instructs Trim Galore to remove bp from the 3' end of read 2 AFTER adapter/quality trimming has been performed
     --trim_nextseq [int]          Instructs Trim Galore to apply the --nextseq=X option, to trim based on quality after removing poly-G tails
     --pico                        Sets trimming and standedness settings for the SMARTer Stranded Total RNA-Seq Kit - Pico Input kit. Equivalent to: --forwardStranded --clip_r1 3 --three_prime_clip_r2 3
-    --saveTrimmed                 Save trimmed FastQ file intermediates
+    --save_trimmed                 Save trimmed FastQ file intermediates
 
   Ribosomal RNA removal:
     --removeRiboRNA               Removes ribosomal RNA using SortMeRNA
@@ -49,11 +49,10 @@ def help() {
 
   Alignment:
     --aligner                     Specifies the aligner to use (available are: 'hisat2', 'star')
-    --pseudo_aligner              Specifies the pseudo aligner to use (available are: 'salmon'). Runs in addition to `--aligner`
-    --stringTieIgnoreGTF          Perform reference-guided de novo assembly of transcripts using StringTie i.e. dont restrict to those in GTF file
+    --stringtie_ignore_gtf        Perform reference-guided de novo assembly of transcripts using StringTie i.e. dont restrict to those in GTF file
     --seq_center                  Add sequencing center in @RG line of output BAM header
-    --saveAlignedIntermediates    Save the BAM files from the aligment step - not done by default
-    --saveUnaligned               Save unaligned reads from either STAR, HISAT2 or Salmon to extra output files.
+    --saveBAM                     Save the BAM files from the aligment step - not done by default
+    --save_unmapped               Save unaligned reads from either STAR, HISAT2 or Salmon to extra output files.
     --skipAlignment               Skip alignment altogether (usually in favor of pseudoalignment)
     --percent_aln_skip            Percentage alignment below which samples are removed from further processing. Default: 5%
 
@@ -105,9 +104,6 @@ def prep_params(params, workflow) {
   // aligner
   if (params.aligner != 'star' && params.aligner != 'hisat2')
     exit 1, "Invalid aligner option: ${params.aligner}. Valid options: 'star', 'hisat2'"
-  if (params.pseudo_aligner && params.pseudo_aligner != 'salmon')
-    exit 1, "Invalid pseudo aligner option: ${params.pseudo_aligner}. Valid options: 'salmon'"
-  // biotype
   params.biotype = params.gencode ? "gene_type" : params.fc_group_features_type
 
   // uppmax
@@ -125,25 +121,28 @@ def prep_params(params, workflow) {
   }
 }
 
-def getSummary() {
+def summary() {
   def summary = [:]
   if (workflow.revision) summary['Pipeline Release'] = workflow.revision
   summary['Run Name'] = params.name ?: workflow.runName
   summary['Design'] = params.design
+  summary['Source'] = params.source
   summary['Strandedness'] = params.stranded
+  summary['Genome'] = params.genome
   summary['Remove rRNA'] = params.removeRiboRNA
   if (params.pico) summary['Library Prep'] = "SMARTer Stranded Total RNA-Seq Kit - Pico Input"
   summary['Trimming'] = "5'R1: $params.clip_r1 / 5'R2: $params.clip_r2 / 3'R1: $params.three_prime_clip_r1 / 3'R2: $params.three_prime_clip_r2 / NextSeq Trim: $params.trim_nextseq"
   if (params.genome) summary['Genome'] = params.genome
   summary['Aligner'] = params.aligner
-  summary['Pseudo Aligner'] = params.pseudo_aligner
   // if (params.gtf) summary['GTF Annotation'] = params.gtf
   // if (params.gff) summary['GFF3 Annotation'] = params.gff
   // if (params.bed12) summary['BED Annotation'] = params.bed12
+  summary['Run StringTie'] = params.run_stringtie
+  summary['Run Salmon'] = params.run_salmon
   if (params.gencode) summary['GENCODE'] = params.gencode
-  if (params.stringTieIgnoreGTF) summary['StringTie Ignore GTF'] = params.stringTieIgnoreGTF
+  if (params.stringtie_ignore_gtf) summary['StringTie Ignore GTF'] = params.stringtie_ignore_gtf
   // if (params.fc_group_features_type) summary['Biotype GTF field'] = params.biotype
-  summary['Save prefs'] = "Ref Genome: "+(params.saveReference ? 'T' : 'F')+" / Trimmed FastQ: "+(params.saveTrimmed ? 'T' : 'F')+" / Intermediate BAM: "+(params.saveAlignedIntermediates ? 'T' : 'F')
+  summary['Save prefs'] = "Ref Genome: "+(params.save_reference ? 'T' : 'F')+" / Trimmed FastQ: "+(params.save_trimmed ? 'T' : 'F')+" / Intermediate BAM: "+(params.saveBAM ? 'T' : 'F')
   summary['Max Resources'] = "$params.max_memory memory, $params.max_cpus cpus, $params.max_time time per job"
   if (workflow.containerEngine) summary['Container'] = "$workflow.containerEngine - $workflow.container"
   summary['Output dir'] = params.outdir

@@ -7,9 +7,6 @@ if (params.help) { help(); exit 0 }
 prep_params(params, workflow)
 
 // validate inputs
-  if (params.source != 'local' && params.source != 'sra') {
-    exit 1, "Invalid source: ${params.source}. Valid options: 'local', 'sra'"
-  }
 
 // set up channels
   nofile = Channel.fromPath("NO_FILE")
@@ -18,27 +15,28 @@ prep_params(params, workflow)
     .ifEmpty { exit 1, "sample design table missing: ${params.design}" }
   reads = get_reads(design)
 
-include '../modules/barn.nf'
+include fqc from '../modules/fastq.nf'
+include {fqd; fqz; fqv; mqc; upd} from '../modules/barn.nf'
 
 def summary = getSummary()
 log.info showHeader(summary)
 
 workflow {
   main:
-    clean_reads = Channel.create()
-    if (params.source == 'sra') {
-      reads | fqd
-      clean_reads = fqd.out
-    } else if (params.source == 'local') {
+    clean_reads = Channel.empty()
+    if( params.local ) {
       reads | fqz | fqv
       clean_reads = fqv.out
+    } else {
+      reads | fqd
+      clean_reads = fqd.out
     }
     clean_reads | fqc
-    mqc(fqc.collect())
+    mqc(fqc.out.zip.collect())
     upd(design, mqc.out)
   publish:
-    clean_reads to: "${params.fq_dir}", mode:'link', overwrite: true
-    upd.out to: "${params.meta_dir}", mode:'link', overwrite: true
+    clean_reads to: "${params.fq_dir}/${params.name}", mode:'copy', overwrite: true
+    upd.out to: "${params.meta_dir}", mode:'copy', overwrite: true
 }
 
 workflow.onComplete {

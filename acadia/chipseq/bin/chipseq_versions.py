@@ -4,47 +4,42 @@ from collections import OrderedDict
 import re
 
 regexes = {
-    'nfc/rnaseq': ['v_ngi_rnaseq.txt', r"(\S+)"],
+    'nf-core/chipseq': ['v_pipeline.txt', r"(\S+)"],
     'Nextflow': ['v_nextflow.txt', r"(\S+)"],
     'FastQC': ['v_fastqc.txt', r"FastQC v(\S+)"],
-    'Cutadapt': ['v_cutadapt.txt', r"(\S+)"],
     'Trim Galore!': ['v_trim_galore.txt', r"version (\S+)"],
-    'SortMeRNA': ['v_sortmerna.txt', r"SortMeRNA version (\S+),"],
-    'STAR': ['v_star.txt', r"(\S+)"],
-    'HISAT2': ['v_hisat2.txt', r"version (\S+)"],
-    'Picard MarkDuplicates': ['v_markduplicates.txt', r"([\d\.]+)-SNAPSHOT"],
+    'BWA': ['v_bwa.txt', r"Version: (\S+)"],
     'Samtools': ['v_samtools.txt', r"samtools (\S+)"],
+    'BEDTools': ['v_bedtools.txt', r"bedtools v(\S+)"],
+    'BamTools': ['v_bamtools.txt', r"bamtools (\S+)"],
+    'deepTools': ['v_deeptools.txt', r"plotFingerprint (\S+)"],
+    'Picard': ['v_picard.txt', r"([\d\.]+)-SNAPSHOT"],
+    'R': ['v_R.txt', r"R version (\S+)"],
+    'Pysam': ['v_pysam.txt', r"(\S+)"],
+    'MACS2': ['v_macs2.txt', r"macs2 (\S+)"],
+    'HOMER': ['v_homer.txt', r"(\S+)"],
     'featureCounts': ['v_featurecounts.txt', r"featureCounts v(\S+)"],
-    'Salmon': ['v_salmon.txt', r"salmon (\S+)"],
-    'deepTools': ['v_deeptools.txt', r"bamCoverage (\S+)"],
-    'StringTie': ['v_stringtie.txt', r"(\S+)"],
     'Preseq': ['v_preseq.txt', r"Version: (\S+)"],
-    'RSeQC': ['v_rseqc.txt', r"read_duplication.py ([\d\.]+)"],
-    'Qualimap': ['v_qualimap.txt', r"QualiMap v(\S+)"],
-    'dupRadar': ['v_dupRadar.txt', r"(\S+)"],
-    'edgeR': ['v_edgeR.txt', r"(\S+)"],
     'MultiQC': ['v_multiqc.txt', r"multiqc, version (\S+)"],
 }
+
 results = OrderedDict()
-results['nfc/rnaseq'] = '<span style="color:#999999;\">N/A</span>'
+results['nfc/chipseq'] = '<span style="color:#999999;\">N/A</span>'
 results['Nextflow'] = '<span style="color:#999999;\">N/A</span>'
 results['FastQC'] = '<span style="color:#999999;\">N/A</span>'
-results['Cutadapt'] = '<span style="color:#999999;\">N/A</span>'
 results['Trim Galore!'] = '<span style="color:#999999;\">N/A</span>'
-results['SortMeRNA'] = '<span style="color:#999999;\">N/A</span>'
-results['STAR'] = False
-results['HISAT2'] = False
-results['Picard MarkDuplicates'] = '<span style="color:#999999;\">N/A</span>'
+results['BWA'] = '<span style="color:#999999;\">N/A</span>'
 results['Samtools'] = '<span style="color:#999999;\">N/A</span>'
-results['featureCounts'] = '<span style="color:#999999;\">N/A</span>'
-results['Salmon'] = '<span style="color:#999999;\">N/A</span>'
-results['StringTie'] = '<span style="color:#999999;\">N/A</span>'
-results['Preseq'] = '<span style="color:#999999;\">N/A</span>'
+results['BEDTools'] = '<span style="color:#999999;\">N/A</span>'
+results['BamTools'] = '<span style="color:#999999;\">N/A</span>'
 results['deepTools'] = '<span style="color:#999999;\">N/A</span>'
-results['RSeQC'] = '<span style="color:#999999;\">N/A</span>'
-results['dupRadar'] = '<span style="color:#999999;\">N/A</span>'
-results['edgeR'] = '<span style="color:#999999;\">N/A</span>'
-results['Qualimap'] = '<span style="color:#999999;\">N/A</span>'
+results['Picard'] = '<span style="color:#999999;\">N/A</span>'
+results['R'] = '<span style="color:#999999;\">N/A</span>'
+results['Pysam'] = '<span style="color:#999999;\">N/A</span>'
+results['MACS2'] = '<span style="color:#999999;\">N/A</span>'
+results['HOMER'] = False
+results['featureCounts'] = '<span style="color:#999999;\">N/A</span>'
+results['Preseq'] = '<span style="color:#999999;\">N/A</span>'
 results['MultiQC'] = '<span style="color:#999999;\">N/A</span>'
 
 # Search each file using its regex
@@ -58,16 +53,17 @@ for k, v in regexes.items():
     except IOError:
         results[k] = False
 
-# Strip STAR or HiSAT2
-for k in results:
+x = results.copy()
+# Remove software set to false in results
+for k in x:
     if not results[k]:
         del(results[k])
 
 # Dump to YAML
 print ('''
 id: 'software_versions'
-section_name: 'nfc/rnaseq Software Versions'
-section_href: 'https://github.com/orionzhou/nfc/rnaseq'
+section_name: 'nfc/chipseq Software Versions'
+section_href: 'https://github.com/orionzhounfc/chipseq'
 plot_type: 'html'
 description: 'are collected at run time from the software output.'
 data: |

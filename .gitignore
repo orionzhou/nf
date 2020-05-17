@@ -9,6 +9,7 @@ conda
 work
 run
 temp
+tmp
 multiqc
 out
 .nextflow*

@@ -19,10 +19,9 @@ process ril1 {
   """
 }
 
-
 process ril2 {
   label "process_medium"
-  tag ""
+  tag "${params.name}"
 
   input:
   val rids
