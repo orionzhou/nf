@@ -10,7 +10,7 @@ process hs2 {
     }
 
   input:
-  tuple id, paired, path(reads), pre, path(hs2_indices), path(splicesites)
+  tuple id, paired, path(reads), pre, path(hs2_indices)
 
   output:
   tuple id, path("${id}.bam"), emit: bam
@@ -20,21 +20,22 @@ process hs2 {
   script:
   seq_center = params.seq_center ? 'CN:$params.seq_center' : ''
   rg = "--rg-id ${id} --rg ${seq_center.replaceAll('\\s','_')} SM:${id}"
+  opt_splice = params.lib == 'chipseq' ? '--no-spliced-alignment' : ''
   def strandness = ''
-  if (params.stranded == 'forward') {
+  if (params.lib == 'rnaseq' && params.stranded == 'forward') {
     strandness = !paired ? '--rna-strandness F' : '--rna-strandness FR'
-  } else if (params.stranded == 'reverse') {
+  } else if (params.lib == 'rnaseq' && params.stranded == 'reverse') {
     strandness = !paired ? '--rna-strandness R' : '--rna-strandness RF'
   }
   input = paired ? "-1 ${reads[0]} -2 ${reads[1]}" : "-U ${reads}"
-  unaligned = params.save_unmapped ? !paired ? "--un-gz unmapped.hisat2.gz" : "--un-conc-gz unmapped.hisat2.gz" : ''
+  // unaligned = params.save_unmapped ? !paired ? "--un-gz unmapped.hisat2.gz" : "--un-conc-gz unmapped.hisat2.gz" : ''
   // --dta --no-mixed --no-discordant
   // --known-splicesite-infile $splicesites \\
+  // ${unaligned} \\
   """
   hisat2 -x ${params.hisat2_index} \\
-     ${input} $strandness \\
-     -p ${task.cpus} ${unaligned} \\
-     --met-stderr --new-summary \\
+     ${input} $opt_splice $strandness \\
+     -p ${task.cpus} --met-stderr --new-summary \\
      --summary-file ${id}.hisat2_summary.txt $rg \\
      | samtools view -bSh -o ${id}.bam -
   """
@@ -118,12 +119,47 @@ process bwa {
   path "${id}.log", emit: log optional true
 
   script:
-  rg = "-R '@RG\\tID:${id}\\tSM:${id}\\tPL:ILLUMINA'"
+  rg = "'@RG\\tID:${id}\\tSM:${id}\\tPL:ILLUMINA'"
   """
   bwa mem -t ${task.cpus} $pre \\
-    $rg $reads |\\
+    -R $rg $reads |\\
     samtools view -@ ${task.cpus} -b -h -O BAM -o ${id}.bam -
   """
+}
+
+process bwa_aln {
+  label 'high_memory'
+  tag "$id"
+  publishDir "${params.outdir}/11_bwa_aln", mode:'link', overwrite:'true',
+    saveAs: { fn ->
+      if (fn.indexOf(".bam") == -1) "logs/$fn"
+      else if (!params.saveBAM && fn == 'where_are_my_files.txt') fn
+      else if (params.saveBAM && fn != 'where_are_my_files.txt') fn
+      else null
+    }
+
+  input:
+  tuple id, paired, path(reads), pre, path(index)
+
+  output:
+  tuple id, path("${id}.bam"), emit: bam
+  path "${id}.log", emit: log optional true
+
+  script:
+  rg = "'@RG\\tID:${id}\\tSM:${id}\\tPL:ILLUMINA'"
+  if( paired )
+    """
+    bwa aln -t ${task.cpus} $pre $reads[0] > out1.sai
+    bwa aln -t ${task.cpus} $pre $reads[1] > out2.sai
+    bwa sampe -r $rg $pre out1.sai out2.sai $reads |\\
+      samtools view -@ ${task.cpus} -b -h -O BAM -o ${id}.bam -
+    """
+  else
+    """
+    bwa aln -t ${task.cpus} $pre $reads > out.sai
+    bwa samse -r $rg $pre out.sai $reads |\\
+      samtools view -@ ${task.cpus} -b -h -O BAM -o ${id}.bam -
+    """
 }
 
 process bsmk {
@@ -168,10 +204,10 @@ workflow aln {
         .ifEmpty { exit 1, "HISAT2 index not found: ${params.hisat2_index}" }
         .collect()
         .map {row -> tuple params.hisat2_index, row}
-      splicesites = Channel
-        .fromPath(params.bed12, checkIfExists: true)
-        .ifEmpty { exit 1, "HISAT2 splice sites file not found: $splicesites" }
-      hs2(reads.combine(hs2_indices).combine(splicesites))
+      //splicesites = Channel
+        //.fromPath(params.bed12, checkIfExists: true)
+        //.ifEmpty { exit 1, "HISAT2 splice sites file not found: $splicesites" }
+      hs2(reads.combine(hs2_indices))
       aln = hs2.out
     } else if (params.aligner == 'star') {
       gff = Channel.fromPath(params.gff, checkIfExists: true)
@@ -183,7 +219,7 @@ workflow aln {
         .ifEmpty { exit 1, "STAR index not found: ${params.star_index}" }
       star(reads.combine(star_index).combine(gtf))
       aln = star.out
-    } else if (params.aligner == 'bwa') {
+    } else if (params.aligner in ['bwa','bwa_aln']) {
       lastPath = params.bwa_index.lastIndexOf(File.separator)
       bwa_dir =  params.bwa_index.substring(0,lastPath+1)
       bwa_base = params.bwa_index.substring(lastPath+1)
@@ -191,8 +227,13 @@ workflow aln {
         .ifEmpty { exit 1, "bwa index not found: ${params.bwa_index}" }
         .collect()
         .map {row -> tuple params.bwa_index, row}
-      bwa(reads.combine(bwa_index))
-      aln = bwa.out
+      if (params.aligner == 'bwa_aln') {
+        bwa_aln(reads.combine(bwa_index))
+        aln = bwa_aln.out
+      } else {
+        bwa(reads.combine(bwa_index))
+        aln = bwa.out
+      }
     }
   emit:
     bam = aln.bam

@@ -7,129 +7,36 @@ if (params.help) { help(); exit 0 }
 
 prep_params(params, workflow)
 
-// stage channels, variables, files
-  wherefile = Channel.fromPath("$baseDir/assets/where_are_my_files.txt", checkIfExists: true)
-  // Stage config files
-  ch_mqc_cfg = file(params.multiqc_config, checkIfExists: true)
+// Stage config files
   ch_out_doc = file("$baseDir/docs/output.md", checkIfExists: true)
-  // rRNA; default: bundled DB list in `assets/rrna-db-defaults.txt`
-    rRNA_database = file(params.rRNA_database_manifest)
-    if (rRNA_database.isEmpty()) {exit 1, "File ${rRNA_database.getName()} is empty!"}
-    sortmerna_fasta = Channel
-      .from( rRNA_database.readLines() )
-      .map { row -> file(row) }
 
 // validate inputs
   design = Channel
     .fromPath(params.design, checkIfExists: true)
-    .ifEmpty { exit 1, "sample design table missing: ${params.design}" }
-  design2 = Channel
-    .fromPath("${params.qcdir}/${params.name}/01.meta.tsv")
-  if (params.aligner != 'star' && params.aligner != 'hisat2') {
-      exit 1, "Invalid aligner option: ${params.aligner}. Valid options: 'star', 'hisat2'"
-  }
-  if (params.fasta) {
-    if (has_ext(params.fasta, 'gz')) {
-      Channel.fromPath(params.fasta, checkIfExists: true)
-        .ifEmpty { exit 1, "Genome fasta file not found: ${params.fasta}" }
-        .set { genome_fasta_gz }
-    } else {
-      genome_fasta = Channel.fromPath(params.fasta, checkIfExists: true)
-        .ifEmpty { exit 1, "Genome fasta file not found: ${params.fasta}" }
-    }
-  } else {
-    exit 1, "No reference genome files specified!"
-  }
+    .ifEmpty { exit 1, "genome design table missing: ${params.design}" }
+  gtable = design
+    .splitCsv(header:true, sep:'\t')
+    .filter { it.run == 'T' }
 
-  if (params.gtf) {
-    if (params.gff)
-      log.info "Both GTF and GFF have been provided: Using GTF as priority."
-    if (has_ext(params.gtf, 'gz')) {
-      gtf_gz = Channel
-        .fromPath(params.gtf, checkIfExists: true)
-        .ifEmpty { exit 1, "GTF annotation file not found: ${params.gtf}" }
-    } else {
-      gtf = Channel
-        .fromPath(params.gtf, checkIfExists: true)
-        .ifEmpty { exit 1, "GTF annotation file not found: ${params.gtf}" }
-    }
-  } else if (params.gff) {
-    if (has_ext(params.gff, 'gz')) {
-      gff_gz = Channel.fromPath(params.gff, checkIfExists: true)
-         .ifEmpty { exit 1, "GFF annotation file not found: ${params.gff}" }
-    } else {
-    }
-  } else {
-    exit 1, "No GTF or GFF3 annotation specified!"
-  }
-  rcfg = Channel
-    .fromPath(params.rcfg, checkIfExists: true)
-    .ifEmpty { exit 1, "rcfg annotation file not found: ${params.rcfg}" }
-
-include {fq} from '../modules/fastq.nf'
-include {aln} from '../modules/mapping.nf'
-include {bam} from '../modules/bam.nf'
-include {version; outdoc; rnaseq; mqc; mg; renorm} from '../modules/rnaseq.nf'
+include genome from '../modules/genome.nf'
+//include {version; outdoc} from '../modules/genome.nf'
 
 def sum = summary()
 log.info show_header(sum)
 check_host()
 
-include {get_read_num} from '../modules/utils.nf'
 workflow {
   main:
-    version()
-    outdoc(ch_out_doc)
-
-    design | fq
-    reads = fq.out.trim_reads
-    readlist = fq.out.readlist
-    ch_read_num = get_read_num(readlist)
-
-    aln(fq.out.trim_reads)
-    bam(aln.out.bam, ch_read_num)
-    bams = bam.out.bams
-    rnaseq(bams, reads, readlist)
-
-    mqc(ch_mqc_cfg,
-      fq.out.raw_fqc.collect().ifEmpty([]),
-      fq.out.trim_log.collect().ifEmpty([]),
-      aln.out.l.collect().ifEmpty([]),
-      bam.out.pseq.collect().ifEmpty([]),
-      rnaseq.out.rseqc.collect().ifEmpty([]),
-      rnaseq.out.qmap.collect().ifEmpty([]),
-      rnaseq.out.duprad.collect().ifEmpty([]),
-      rnaseq.out.fcnt_log.collect().ifEmpty([]),
-      rnaseq.out.fcnt_biotype.collect().ifEmpty([]),
-      rnaseq.out.corr.collect().ifEmpty([]),
-      version.out.yml.collect().ifEmpty([]),
-      yml_summary(sum)
-      )
-    mg(readlist.collect(), rcfg.collect(),
-      bam.out.stats.collect(), rnaseq.out.fcnt_txt.collect(),
-      rnaseq.out.salm_gcnt.collect().ifEmpty([]),
-      rnaseq.out.salm_gtpm.collect().ifEmpty([]),
-      rnaseq.out.salm_tcnt.collect().ifEmpty([]),
-      rnaseq.out.salm_ttpm.collect().ifEmpty([]),
-      rnaseq.out.ase_gene.collect().ifEmpty([]),
-      rnaseq.out.ase_snp.collect().ifEmpty([]),
-      rnaseq.out.ril_csv.collect().ifEmpty([]),
-      rnaseq.out.ril_txt.collect().ifEmpty([])
-      )
-    renorm(design2.collect(), mg.out, rcfg.collect())
+    genome(gtable)
+    //version()
+    //outdoc(ch_out_doc)
   //publish:
-    //readlist to: "${params.qcdir}/${params.name}", mode:'copy', overwrite:'true'
-    //mqc.out.html to: "${params.webdir}", mode:'copy', overwrite:'true'
-    //mg.out to: "${params.qcdir}/${params.name}", mode:'copy', overwrite:'true'
-    //renorm.out to: "${params.qcdir}/${params.name}", mode:'copy', overwrite:'true'
-    //rnaseq.out.vnt_vcf to: "${params.qcdir}/${params.name}", mode:'copy', overwrite:'true'
 }
 
 workflow.onComplete {
   mf = workflow.manifest
   name = params.name ?: mf.name; author = mf.author; url = mf.homePage;
-  // Set up the e-mail variables
-  def subject = "[$name] Suceeded"
+  // Set up the e-mail variables def subject = "[$name] Suceeded"
   if (!workflow.success) subject = "[$name] FAILED"
   def email_fields = [:]
     email_fields['version'] = workflow.manifest.version
@@ -151,24 +58,9 @@ workflow.onComplete {
     if (workflow.commitId) email_fields['summary']['Pipeline repository Git Commit'] = workflow.commitId
     if (workflow.revision) email_fields['summary']['Pipeline Git branch/tag'] = workflow.revision
     if (workflow.container) email_fields['summary']['Docker image'] = workflow.container
-    email_fields['percent_aln_skip'] = params.percent_aln_skip
     email_fields['summary']['Nextflow Version'] = workflow.nextflow.version
     email_fields['summary']['Nextflow Build'] = workflow.nextflow.build
     email_fields['summary']['Nextflow Compile Timestamp'] = workflow.nextflow.timestamp
-
-  // On success try attach the multiqc report
-  def mqc_report = null
-  try {
-    if (workflow.success && !params.skip_multiqc) {
-      mqc_report = mqc.out.html.getVal()
-      if (mqc_report.getClass() == ArrayList) {
-        log.warn "[$name] Found multiple reports from process 'multiqc', will use only one"
-        mqc_report = mqc_report[0]
-      }
-    }
-  } catch (all) {
-    log.warn "[$name] Could not attach multiqc report to summary email"
-  }
 
   // Check if we are only sending emails on failure
   email_address = params.email
@@ -187,7 +79,7 @@ workflow.onComplete {
   def email_html = html_template.toString()
 
   // Render the sendmail template
-  def smail_fields = [ email: email_address, subject: subject, email_txt: email_txt, email_html: email_html, baseDir: "$baseDir", mqcFile: mqc_report, mqcMaxSize: params.max_multiqc_email_size.toBytes() ]
+  def smail_fields = [ email: email_address, subject: subject, email_txt: email_txt, email_html: email_html, baseDir: "$baseDir" ]
   def sf = new File("$baseDir/assets/sendmail_template.txt")
   def sendmail_template = engine.createTemplate(sf).make(smail_fields)
   def sendmail_html = sendmail_template.toString()
@@ -225,8 +117,8 @@ workflow.onComplete {
   c_green = params.monochrome_logs ? '' : "\033[0;32m";
   c_red = params.monochrome_logs ? '' : "\033[0;31m";
 
-  //def nsam = ch_reads_l.getVal().size()
-  log.info "[${c_purple}${name}${c_reset}] ${c_green}All samples processed${c_reset}"
+  // def nsam = ch_reads_l.getVal().size()
+  // log.info "[${c_purple}${name}${c_reset}] ${c_green}All samples processed${c_reset}"
 
   if (workflow.stats.ignoredCount > 0 && workflow.success) {
     log.info "- ${c_purple}Warning, pipeline completed, but with errored process(es) ${c_reset}"

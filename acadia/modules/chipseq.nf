@@ -97,17 +97,15 @@ process fbam {
   }
   name_sort_bam = params.single_end ? "" : "samtools sort -n -@ $task.cpus -o ${pre}.namesorted.bam -T $pre ${pre}.bam"
   //$name_sort_bam
+  //| bamtools filter -out ${pre1}.bam -script $bamtools_filter_config
   """
   samtools view \\
       $filter_params \\
       $dup_params \\
       $multimap_params \\
       $blacklist_params \\
-      -b ${bam} \\
-      | bamtools filter \\
-          -out ${pre1}.bam \\
-          -script $bamtools_filter_config
-  $cmd
+      -b ${bam} -O bam -o ${pre1}.bam
+  samtools sort -@ $task.cpus -o ${pre}.bam -T $pre ${pre1}.bam
   samtools index ${pre}.bam
   samtools flagstat ${pre}.bam > ${pre}.flagstat
   samtools idxstats ${pre}.bam > ${pre}.idxstats
@@ -329,7 +327,7 @@ process macs2 {
   output:
   tuple antibody, replicatesExist, multipleGroups, ip, control, path("${ip}.bed"), emit: peak
   //tuple ip, path("*.{bed,xls,gappedPeak,bdg}"), emit: peak
-  tuple ip, path("${ip}.gapped.bed"), emit: peak_gapped
+  tuple ip, path("${ip}.gapped.bed"), emit: peak_gapped optional true
   tuple ip, path("${ip}.xls"), emit: peak_xls
   path "*igv.txt", emit: igv
   path "*_mqc.tsv", emit: mqc
@@ -352,7 +350,7 @@ process macs2 {
       --keep-dup all
 
   mv ${ip}_peaks.${params.peak_type} ${ip}.bed
-  mv ${ip}_peaks.gappedPeak ${ip}.gapped.bed
+  [ -f ${ip}_peaks.gappedPeak ] && mv ${ip}_peaks.gappedPeak ${ip}.gapped.bed
   mv ${ip}_peaks.xls ${ip}.xls
 
   cat ${ip}.bed | wc -l | awk -v OFS='\t' '{ print "${ip}", \$1 }' | cat $peak_count_header - > ${ip}_peaks.count_mqc.tsv
@@ -710,8 +708,8 @@ process mg {
   macs2_frip = macs2.findAll {it.toString().endsWith(".FRiP_mqc.tsv")}.join(' ')
   """
   merge.stats.R --opt bam_stat -o bamstats.tsv $bamstats
-  grep -v '^#' ${macs2_cnt} > macs2_count.tsv
-  grep -v '^#' ${macs2_frip} > macs2_frip.tsv
+  grep -v '^#' -h ${macs2_cnt} > macs2_count.tsv
+  grep -v '^#' -h ${macs2_frip} > macs2_frip.tsv
   """
 }
 

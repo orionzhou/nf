@@ -131,6 +131,8 @@ def summary() {
   summary['Genome'] = params.genome
   summary['Remove rRNA'] = params.removeRiboRNA
   if (params.pico) summary['Library Prep'] = "SMARTer Stranded Total RNA-Seq Kit - Pico Input"
+  if (params.save_fastq) summary['Save raw fastq'] = params.save_fastq ? 'T':'F'
+  if (params.save_trimmed) summary['Save trimmed fastq'] = params.save_trimmed ? 'T':'F'
   summary['Trimming'] = "5'R1: $params.clip_r1 / 5'R2: $params.clip_r2 / 3'R1: $params.three_prime_clip_r1 / 3'R2: $params.three_prime_clip_r2 / NextSeq Trim: $params.trim_nextseq"
   if (params.genome) summary['Genome'] = params.genome
   summary['Aligner'] = params.aligner

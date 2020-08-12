@@ -16,7 +16,9 @@ from jcvi.formats.base import must_open
 def read_samplelist(fs):
     assert op.isfile(fs), "samplelist not found: %s" % fs
     cvts = dict(SampleID=str,Tissue=str,Genotype=str)
-    sl = pd.read_csv(fs, sep="\t", header=0, converters=cvts)
+    sl = pd.read_csv(fs, sep="\t", header=0, converters=cvts,
+                     true_values=['1','Y','Yes','T','True'],
+                     false_values=['0','N','No','F','False'])
     return sl
 
 def check_fastq_0(args, yid):
@@ -65,8 +67,12 @@ def check_fastq(design):
 
 def nf_start(args):
     yid = args.yid
-    metadir = args.metadir_l if args.source == 'local' else args.metadir_s
+    metadir_x, metadir = args.metadir_sx, args.metadir_s
+    if args.source == "local":
+        metadir_x, metadir = args.metadir_lx, args.metadir_l
+    xls = "%s/%s.xlsx" % (metadir_x, yid)
     design = "%s/%s.tsv" % (metadir, yid)
+    sh("excel.py tsv %s %s" % (xls, design))
     single_end = check_fastq(design)
 
     ft = "%s/%s.config" % (args.cfgdir, args.lib)
@@ -75,10 +81,15 @@ def nf_start(args):
     srd = str(args.strand).lower()
     if srd != 'false': srd = "'%s'" % srd
 
+    aligner_map = dict(rnaseq='hisat2',chipseq='bwa',methylseq='bismark_hisat2')
+    aligner = aligner_map[args.lib] if args.aligner == 'auto' else args.aligner
     msg = tmp.render(yid = yid,
                      design = design,
                      source = args.source,
+                     interleaved = str(args.interleaved).lower(),
                      save_fastq = str(args.save_fastq).lower(),
+                     save_trimmed = str(args.save_trimmed).lower(),
+                     aligner = aligner,
                      saveBAM = str(args.saveBAM).lower(),
                      genome = args.genome,
                      skip_preseq = str(not args.preseq).lower(),
@@ -89,7 +100,8 @@ def nf_start(args):
                      salmon = str(args.salmon).lower(),
                      stringtie = str(args.stringtie).lower(),
 
-                     single_end = str(single_end).lower()
+                     single_end = str(single_end).lower(),
+                     narrow_peak = str(args.narrow_peak).lower()
     )
 
     rundir = op.join(args.projdir, args.lib, 'nf', yid)
@@ -129,30 +141,36 @@ if __name__ == "__main__":
 
     libs = ['rnaseq','smrnaseq','chipseq','dapseq','atacseq','methylseq','dnaseq']
     ps.add_argument('lib', choices = libs, help = 'library type')
-    ps.add_argument('yid', help = 'study/project ID')
+    ps.add_argument('yid', help = 'study/project id')
     ps.add_argument('--projdir', default='/home/springer/zhoux379/projects', help = 'project dir')
     ps.add_argument('--cfgdir', default='/home/springer/zhoux379/git/nf/configs/templates', help = 'nextflow template config dir')
     ps.add_argument('--workdir', default='/scratch.global/zhoux379/nf/work', help = 'nextflow work dir')
     ps.add_argument('--rawdir', default='/scratch.global/zhoux379/nf/raw', help = 'nextflow raw output dir')
     ps.add_argument('--source', default='sra', choices=['local','sra','sra2'], help='sequence source')
-    ps.add_argument('--metadir_l', default='/home/springer/zhoux379/projects/barn/data/06_local_list', help = 'local meta dir')
-    ps.add_argument('--metadir_s', default='/home/springer/zhoux379/projects/barn/data/09_sra_list', help = 'SRA meta dir')
+    ps.add_argument('--interleaved', action='store_true', help='sequence source')
+    ps.add_argument('--metadir_lx', default='/home/springer/zhoux379/projects/barn/data/06_local_list_excel', help = 'local meta excels')
+    ps.add_argument('--metadir_l', default='/home/springer/zhoux379/projects/barn/data/07_local_list', help = 'local meta dir')
+    ps.add_argument('--metadir_sx', default='/home/springer/zhoux379/projects/barn/data/08_sra_list_excel', help = 'sra meta excels')
+    ps.add_argument('--metadir_s', default='/home/springer/zhoux379/projects/barn/data/09_sra_list', help = 'sra meta dir')
 #    ps.add_argument('--seqdir', default='/scratch.global/zhoux379/barn/data/fastq', help = 'seq dir')
     ps.add_argument('--keep', action='store_true', help='keep previous results?')
-    ps.add_argument('--save_fastq', action='store_true', help='save fastqfiles?')
-    ps.add_argument('--saveBAM', action='store_true', help='save BAM files?')
+    ps.add_argument('--save_fastq', action='store_true', help='save fastq files?')
+    ps.add_argument('--save_trimmed', action='store_true', help='save trimmed fastq files?')
     ps.add_argument('--genome', default='Zmays_B73', help = 'reference genome')
+    ps.add_argument('--aligner', default='auto', help='aligning software')
+    ps.add_argument('--saveBAM', action='store_true', help='save bam files?')
     ps.add_argument('--preseq', action='store_true', help='run preseq?')
 
-    g1 = ps.add_argument_group('rnaseq', 'RNA-Seq specific arguments')
+    g1 = ps.add_argument_group('rnaseq', 'rna-seq specific arguments')
     g1.add_argument('--strand', default='false', help = 'read strandedness')
     g1.add_argument('--ase', action='store_true', help='allele specific expression?')
-    g1.add_argument('--ril', action='store_true', help='genotype (RIL) samples?')
+    g1.add_argument('--ril', action='store_true', help='genotype (ril) samples?')
     g1.add_argument('--salmon', action='store_true', help='run salmon?')
     g1.add_argument('--stringtie', action='store_true', help='run stringtie?')
 
-    g2 = ps.add_argument_group('chipseq', 'ChIP-Seq specific arguments')
-    g2.add_argument('--pair', default='auto', choices=['auto','single','paired'], help = 'force specify paired end option')
+    g2 = ps.add_argument_group('chipseq', 'chip-seq specific arguments')
+    #g2.add_argument('--pair', default='auto', choices=['auto','single','paired'], help = 'force specify paired end option')
+    g2.add_argument('--narrow_peak', action='store_true', help = 'turn off broad peak calling mode in MACS2')
 
     args = ps.parse_args()
     nf_start(args)

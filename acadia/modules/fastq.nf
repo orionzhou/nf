@@ -1,3 +1,4 @@
+include {has_ext} from '../modules/utils.nf'
 process fqd {
   label 'low_memory'
   tag "$id"
@@ -32,10 +33,10 @@ process fqz {
   tag "$id"
 
   input:
-  tuple id, paired, interleaved, path(r0), path(r1), path(r2), gz0, gz1
+  tuple id, paired, path(r0), path(r1), path(r2), gz0, gz1
 
   output:
-  tuple id, paired, interleaved, path("${id}_R0.fq.gz"), path("${id}_R1.fq.gz"), path("${id}_R2.fq.gz")
+  tuple id, paired, path("${id}_R0.fq.gz"), path("${id}_R1.fq.gz"), path("${id}_R2.fq.gz")
 
   script:
   if( paired && gz1 )
@@ -54,7 +55,7 @@ process fqz {
     """
     ln -f $r0 ${id}_R0.fq.gz
     touch ${id}_R1.fq.gz ${id}_R2.fq.gz
-    //cp -fL $r0 ${id}_R0.fq.gz
+    #cp -fL $r0 ${id}_R0.fq.gz
     """
   else
     """
@@ -70,20 +71,20 @@ process fqv {
     saveAs: { fn -> params.save_fastq ? "$fn" : null }
 
   input:
-  tuple id, paired, interleaved, path(r0), path(r1), path(r2)
+  tuple id, paired, path(r0), path(r1), path(r2)
 
   output:
   tuple id, paired, path("${id}_R?.fq.gz", includeInputs: true)
 
   script:
-  if( paired && interleaved )
+  if( paired && params.interleaved )
     """
     rm $r1 $r2
     zcat $r0 |\
       deinterleave_fastq.sh $r1 $r2 ${task.cpus} compress
     rm $r0
     """
-  else if ( paired && !interleaved )
+  else if ( paired && !params.interleaved )
     """
     rm $r0
     """
@@ -174,6 +175,7 @@ process upd {
   tag "${params.name}"
   conda '/home/springer/zhoux379/software/miniconda3/envs/r'
   publishDir "${params.outdir}", mode:'copy', overwrite:'true'
+  publishDir "${params.qcdir}/${params.name}", mode:'copy', overwrite:'true'
 
   input:
   path(design)
@@ -192,11 +194,17 @@ process upd {
 def get_reads(design) {
   reads = Channel.empty()
   if( params.source == 'local' ) {
-    reads = design
+    reads_se = design
       .splitCsv(header:true, sep:"\t")
+      .filter { it.paired != 'TRUE' }
       .map {row -> [row.SampleID, row.paired.toBoolean(),
-        row.interleaved.toBoolean(), file(row.r0), file(row.r1), file(row.r2),
-        hasExtension(row.r0, ".gz"), hasExtension(row.r1, ".gz")]}
+        file(row.r0), file('f1'), file('f2'), has_ext(row.r0, ".gz"), null]}
+    reads_pe = design
+      .splitCsv(header:true, sep:"\t")
+      .filter { it.paired == 'TRUE' }
+      .map {row -> [row.SampleID, row.paired.toBoolean(),
+        file('f0'), file(row.r1), file(row.r2), null, has_ext(row.r1, ".gz")]}
+    reads = reads_se.concat(reads_pe)
   } else if (params.source == 'sra') {
     if (params.lib in ['chipseq','dapseq']) {
       reads = design

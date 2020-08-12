@@ -1,4 +1,4 @@
-include '../modules/utils.nf'
+include {show_header; prep_params_genome} from '../modules/utils.nf'
 
 def help() {
   log.info showHeader()
@@ -18,7 +18,7 @@ def prep_params(params, workflow) {
   prep_params_genome(params)
 }
 
-def getSummary() {
+def summary() {
   def summary = [:]
   if (workflow.revision) summary['Pipeline Release'] = workflow.revision
   summary['Run Name'] = params.name ?: workflow.runName

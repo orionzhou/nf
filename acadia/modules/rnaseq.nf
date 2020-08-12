@@ -301,7 +301,51 @@ process salm {
   """
 }
 
-include get_ch_bcf from "./utils.nf"
+process vnt1 {
+  label "process_medium"
+  tag "${params.name}.$rid"
+
+  input:
+  tuple path(bams), path(bais), path(ref), rid, region
+
+  output:
+  tuple rid, path("${rid}.vcf.gz"), path("${rid}.vcf.gz.tbi")
+
+  when:
+  params.ril
+
+  script:
+  """
+  bcftools mpileup -f $ref -r $region -Ou $bams |\
+    bcftools call -c -Oz -o ${rid}.vcf.gz
+  bcftools index -t ${rid}.vcf.gz
+  """
+}
+
+process vnt2 {
+  label "process_medium"
+  tag "${params.name}"
+
+  input:
+  val rids
+  path(vcfs)
+  path(tbis)
+
+  output:
+  tuple path("vnt.vcf.gz"), path("vnt.vcf.gz.tbi")
+
+  when:
+  params.ril
+
+  script:
+  vcf_str = rids.sort().collect {"${it}.vcf.gz"}.join(' ')
+  """
+  bcftools concat -n $vcf_str -Oz -o vnt.vcf.gz
+  bcftools index -t vnt.vcf.gz
+  """
+}
+
+include {get_ch_bcf} from "./utils.nf"
 include {ase1; ase2} from './ase.nf'
 include {ril1; ril2; ril3} from './ril.nf'
 
@@ -353,7 +397,7 @@ workflow rnaseq {
       genome_fasta = Channel.fromPath(params.fasta, checkIfExists: true)
         .ifEmpty { exit 1, "Genome fasta file not found: ${params.fasta}" }
       ch_bcf_ase = get_ch_bcf(design)
-      ase1(bams.out.join(ch_bcf_ase).combine(genome_fasta))
+      ase1(bams.join(ch_bcf_ase).combine(genome_fasta))
       ase2(ase1.out.combine(gtf))
       ase_gene = ase2.out.gene
       ase_snp = ase2.out.snp
@@ -369,9 +413,9 @@ workflow rnaseq {
       ril_sites_idx = Channel
         .fromPath(params.ril_sites_idx, checkIfExists: true)
         .ifEmpty { exit 1, "RIL sites index not found: ${params.ril_sites_idx}" }
-      win11 = Channel
-        .fromPath(params.win11, checkIfExists: true)
-        .ifEmpty { exit 1, "win11 tsv file not found: ${params.win11}" }
+      win10 = Channel
+        .fromPath(params.win10, checkIfExists: true)
+        .ifEmpty { exit 1, "win10 tsv file not found: ${params.win10}" }
         .splitCsv(header:true, sep:"\t")
         .map { row -> [ row.rid, row.region ] }
       win56 = Channel
@@ -388,8 +432,34 @@ workflow rnaseq {
       vcfs = ril2_in.map { it.collect {it[2]} }.collect()
       tbis = ril2_in.map { it.collect {it[3]} }.collect()
       ril2(win56.collect{it[0]}, vcfs, tbis)
-      ril3(ril2.out.combine(win11))
+      ril3(ril2.out.combine(win10))
       ril_csv = ril3.out.csv; ril_txt = ril3.out.txt
+    }
+
+    vnt_vcf = Channel.empty()
+    if (params.vntcall) {
+      genome_fasta = Channel.fromPath(params.fasta, checkIfExists: true)
+        .ifEmpty { exit 1, "Genome fasta file not found: ${params.fasta}" }
+      win11 = Channel
+        .fromPath(params.win11, checkIfExists: true)
+        .ifEmpty { exit 1, "win11 tsv file not found: ${params.win11}" }
+        .splitCsv(header:true, sep:"\t")
+        .map { row -> [ row.rid, row.region ] }
+      win56 = Channel
+        .fromPath(params.win56, checkIfExists: true)
+        .ifEmpty { exit 1, "win56 tsv file not found: ${params.win56}" }
+        .splitCsv(header:true, sep:"\t")
+        .map { row -> [ row.rid, row.region ] }
+
+      ibams = bams.collect({it[1]}).toSortedList()
+      ibais = bams.collect({it[2]}).toSortedList()
+      vnt1(ibams.combine(ibais).combine(genome_fasta).combine(win56))
+      vnt2_in = win56.join(vnt1.out, by:0)
+        .toSortedList {entry -> entry[0]}
+      vcfs = vnt2_in.map { it.collect {it[2]} }.collect()
+      tbis = vnt2_in.map { it.collect {it[3]} }.collect()
+      vnt2(win56.collect{it[0]}, vcfs, tbis)
+      vnt_vcf = vnt2.out
     }
 
   emit:
@@ -409,6 +479,7 @@ workflow rnaseq {
     ase_snp = ase_snp
     ril_csv = ril_csv
     ril_txt = ril_txt
+    vnt_vcf = vnt_vcf
 }
 
 process mg {
@@ -416,6 +487,7 @@ process mg {
   tag "${params.name}"
   conda '/home/springer/zhoux379/software/miniconda3/envs/r'
   publishDir "${params.outdir}/50_final", mode:'link', overwrite:'true'
+  publishDir "${params.qcdir}/${params.name}", mode:'copy', overwrite:'true'
 
   input:
   path meta
@@ -476,6 +548,7 @@ process renorm {
   tag "${params.name}"
   conda '/home/springer/zhoux379/software/miniconda3/envs/r'
   publishDir "${params.outdir}/50_final", mode:'link', overwrite:'true'
+  publishDir "${params.qcdir}/${params.name}", mode:'copy', overwrite:'true'
 
   input:
   path meta

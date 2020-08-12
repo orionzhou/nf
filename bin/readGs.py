@@ -19,9 +19,13 @@ def gs2tsv(args):
     bk = gc.open(args.book)
     st = bk.worksheet(args.sheet)
     df = pd.DataFrame(st.get_all_records())
-    df2 = df[df.libtype.eq(args.libtype) & df.Run.eq('T')]
-    df3 = df2.filter(items=['yid','libtype','author','year','ASE','stress','RIL','Run'])
-    print(df3.to_csv(index=False, sep="\t"), end='')
+    if args.workflow != '':
+        df = df[df.workflow.eq(args.workflow) & df.Run.eq('C')]
+        if args.workflow == 'rnaseq':
+            df = df.filter(items=['yid','author','year','source','accession','study','genotype','tissue','n','ASE','stress','RIL','Run'])
+        else:
+            df = df.filter(items=['yid','author','year','source','accession','study','genotype','tissue','n','stress','Run'])
+    print(df.to_csv(index=False, sep="\t"), end='')
 
 if __name__ == '__main__':
     import argparse
@@ -29,10 +33,10 @@ if __name__ == '__main__':
             formatter_class = argparse.ArgumentDefaultsHelpFormatter,
             description = 'read google spreadsheet'
     )
-    p.add_argument('--libtype', default='rnaseq', help='library type')
     p.add_argument('--book', default='maize_studies', help = 'name of google spreadsheet')
     p.add_argument('--sheet', default='all', help = 'sheet/tab name')
     p.add_argument('--cred', default='/home/springer/zhoux379/.config/google_account_token.json', help = 'google credential')
+    p.add_argument('--workflow', default='', help='filter by workflow')
 
     args = p.parse_args()
     if not op.isfile(args.cred):

@@ -91,13 +91,16 @@ def summary() {
   summary['Run Name'] = params.name ?: workflow.runName
   summary['Design'] = params.design
   summary['Source'] = params.source
+  summary['Library layout'] = params.single_end ? 'Single-End':'Paired-End'
   if (params.seq_center) summary['Sequencing Center'] = params.seq_center
+  if (params.save_fastq) summary['Save raw fastq'] = params.save_fastq ? 'T':'F'
+  if (params.save_trimmed) summary['Save trimmed fastq'] = params.save_trimmed ? 'T':'F'
   summary['Trimming'] = "5'R1: $params.clip_r1 / 5'R2: $params.clip_r2 / 3'R1: $params.three_prime_clip_r1 / 3'R2: $params.three_prime_clip_r2 / NextSeq Trim: $params.trim_nextseq"
   if (params.genome) summary['Genome'] = params.genome
   //if (params.gtf) summary['GTF Annotation'] = params.gtf
   //if (params.gff) summary['GFF3 Annotation'] = params.gff
   //if (params.bed12) summary['BED Annotation'] = params.bed12
-  if (params.tss_bed) summary['TSS BED'] = params.tss_bed
+  //if (params.tss_bed) summary['TSS BED'] = params.tss_bed
   if (params.macs_gsize) summary['MACS2 Genome Size'] = params.macs_gsize
   if (params.macs_gsize) summary['MACS2 Narrow Peaks'] = params.narrow_peak ? 'Yes' : 'No'
   summary['Min Consensus Reps'] = params.min_reps_consensus
