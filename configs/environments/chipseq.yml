@@ -339,4 +339,3 @@ dependencies:
     - pyqtchart==5.12
     - pyqtwebengine==5.12.1
 prefix: /home/springer/zhoux379/software/miniconda3/envs/chipseq
-

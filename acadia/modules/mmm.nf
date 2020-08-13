@@ -136,11 +136,11 @@ process mg_dreme {
   path(fis)
 
   output:
-  path("dreme.rds")
+  tuple path("dreme.rds"), path("dreme.meme"), path("dreme.txt")
 
   script:
   """
-  merge.dreme.R -o dreme.rds $fis
+  merge.dreme.R -o dreme.rds --meme dreme.meme --txt dreme.txt $fis
   """
 }
 

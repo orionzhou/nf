@@ -497,4 +497,3 @@ dependencies:
   - zlib=1.2.11
   - zstd=1.4.5
 prefix: /home/springer/zhoux379/software/miniconda3/envs/sarek
-
