@@ -348,6 +348,7 @@ process vnt2 {
 include {get_ch_bcf} from "./utils.nf"
 include {ase1; ase2} from './ase.nf'
 include {ril1; ril2; ril3} from './ril.nf'
+include {cage1} from './cage.nf'
 
 workflow rnaseq {
   take:
@@ -436,6 +437,12 @@ workflow rnaseq {
       ril_csv = ril3.out.csv; ril_txt = ril3.out.txt
     }
 
+    cage = Channel.empty();
+    if (params.cage) {
+      cage1(bams)
+      cage = cage1.out
+    }
+
     vnt_vcf = Channel.empty()
     if (params.vntcall) {
       genome_fasta = Channel.fromPath(params.fasta, checkIfExists: true)
@@ -480,6 +487,7 @@ workflow rnaseq {
     ril_csv = ril_csv
     ril_txt = ril_txt
     vnt_vcf = vnt_vcf
+    cage = cage
 }
 
 process mg {
@@ -595,7 +603,7 @@ process mqc {
   output:
   path "*.html", emit: html
   path "*_data", emit: data
-  path "multiqc_plots", emit: plot
+  path "*_plots", emit: plot
 
   script:
   def run = params.name

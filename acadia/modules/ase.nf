@@ -16,6 +16,7 @@ process ase1 {
   script:
   mq = params.mapQuality
   """
+  echo hkk
   alfred ase -r $ref -s sample -v $bcf -m $mq -p -a ${name}.tsv.gz $bam
   alfred split -r $ref -s sample -v $bcf -m $mq \\
       -p ${name}.1.bam -q ${name}.2.bam $bam

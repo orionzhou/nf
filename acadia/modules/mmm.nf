@@ -42,7 +42,11 @@ process fimo_old {
 process fimo {
   label 'low_memory'
   tag "$id"
-  publishDir "${params.outdir}/11_fimo_raw", mode:'copy', overwrite: true
+  publishDir "${params.outdir}", mode:'copy', overwrite: true,
+    saveAs: { fn ->
+      if (fn.indexOf(".tsv") > 0) "11_fimo/${fn.replaceAll('.raw','')}"
+      else null
+    }
 
   input:
   tuple id, path(mtf), path(seq), path(seq_idx), path(bg)
@@ -51,25 +55,10 @@ process fimo {
   tuple id, path("${id}.tsv")
 
   script:
+  pval = 1e-4
   """
-  fimo --skip-matched-sequence --text --motif $id --bfile $bg $mtf $seq > ${id}.tsv
-  """
-}
-
-process fimo2 {
-  label 'low_memory'
-  tag "$id"
-  publishDir "${params.outdir}/12_fimo_sum", mode:'copy', overwrite: true
-
-  input:
-  tuple id, path("in.tsv")
-
-  output:
-  tuple id, path("${id}.tsv")
-
-  script:
-  """
-  parse_fimo.py in.tsv ${id}.tsv
+  fimo --motif $id --bfile $bg --thresh $pval $mtf $seq
+  mv fimo_out/fimo.tsv ${id}.tsv
   """
 }
 
@@ -94,36 +83,48 @@ process meme {
 process dreme {
   label 'low_memory'
   tag "$id"
-  publishDir "${params.outdir}/22_dreme", mode:'copy', overwrite: true
+  publishDir "${params.outdir}", mode:'copy', overwrite: true,
+    saveAs: { fn ->
+      if (fn.indexOf(".dreme") > 0) "22a_dreme_mtf/$fn"
+      else if (fn.indexOf(".tsv") > 0) "22b_dreme_kmer/${fn.replaceAll('.sum','')}"
+      else null
+    }
 
   input:
   tuple id, clid, path(seq), path(cseq)
 
   output:
-  tuple id, path("${id}.txt")
+  tuple id, path("${id}.dreme"), path("${id}.tsv")
 
   script:
-  mink = 5
-  maxk = 20
+  mink = 6
+  maxk = 13
+  pval = 1e-4
+  runtime = 180000
+  //fimo --bfile --motif-- --thresh $pval2 ${id}.dreme $seq || (mkdir fimo_out; touch fimo_out/fimo.tsv)
+  //mv fimo_out/fimo.tsv ${id}.tsv
   """
-  dreme -p $seq -n $cseq -dna -e 0.05 -t 36000 -mink $mink -maxk $maxk -oc out
-  mv out/dreme.txt ${id}.txt
+  dreme -p $seq -n $cseq -dna -e $pval -t $runtime -mink $mink -maxk $maxk -oc out
+  mv out/dreme.txt ${id}.dreme
+  dreme.py 2tsv ${id}.dreme >${id}.tsv
   """
 }
 
 process mg_fimo {
   label 'medium_memory'
+  conda '/home/springer/zhoux379/software/miniconda3/envs/r'
   publishDir "${params.outdir}", mode:'copy', overwrite: true
 
   input:
   path(fis)
 
   output:
-  path("fimo.tsv")
+  path("fimo.rds")
 
   script:
+  //bioawk -t '{print substr(FILENAME,1,length(FILENAME)-4), \$1, \$2, \$3, \$4, \$5}' $fis > fimo.tsv
   """
-  bioawk -t '{print substr(FILENAME,1,length(FILENAME)-4), \$1, \$2, \$3, \$4, \$5}' $fis > fimo.tsv
+  merge.fimo.R -o fimo.rds $fis
   """
 }
 
@@ -133,30 +134,16 @@ process mg_dreme {
   publishDir "${params.outdir}", mode:'copy', overwrite: true
 
   input:
-  path(fis)
+  path(f_mtfs)
+  path(f_tsvs)
 
   output:
-  tuple path("dreme.rds"), path("dreme.meme"), path("dreme.txt")
+  tuple path("dreme.rds"), path("dreme.meme"), path("dreme.txt"), path("dreme_kmer.tsv")
 
   script:
   """
-  merge.dreme.R -o dreme.rds --meme dreme.meme --txt dreme.txt $fis
-  """
-}
-
-process mg_meme {
-  label 'medium_memory'
-  conda '/home/springer/zhoux379/software/miniconda3/envs/r'
-
-  input:
-  path(fis)
-
-  output:
-  path("meme.rds")
-
-  script:
-  """
-  merge.meme.R -o meme.rds $fis
+  merge.dreme.R -o dreme.rds --meme dreme.meme --txt dreme.txt $f_mtfs
+  merge.dreme.kmer.R -o dreme_kmer.tsv $f_tsvs
   """
 }
 
@@ -168,11 +155,9 @@ workflow mmk {
     fimo_bg
   main:
     fimo(mtfs.combine(mtf).combine(seqdb).combine(fimo_bg))
-    fimo2(fimo.out)
-    mg_fimo(fimo2.out.collect({it[1]}))
+    mg_fimo(fimo.out.collect({it[1]}))
   emit:
     fimo = fimo.out
-    fimo2 = fimo2.out
     mg_fimo = mg_fimo.out
 }
 
@@ -189,15 +174,11 @@ workflow mmd {
       .combine(seqret.out, by: 0)
       .map { row -> [ row[1], row[0], row[2], row[3] ] }
     dreme(dreme_in)
-    mg_dreme(dreme.out.collect({it[1]}))
-    //meme(dreme_in)
-    //mg_meme(meme.out.collect({it[1]}))
+    mg_dreme(dreme.out.collect({it[1]}), dreme.out.collect({it[2]}))
   emit:
     seqs = seqret.out
     dreme = dreme.out
     mg_dreme = mg_dreme.out
-    //meme = meme.out
-    //mg_meme = mg_meme.out
 }
 
 
