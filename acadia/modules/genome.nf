@@ -451,9 +451,13 @@ process i_rcfg {
 
 workflow genome {
   take:
-    gtable
+    design
+    pick
   main:
     // stage channels
+      gtable = design
+        .splitCsv(header:true, sep:'\t')
+        .filter { it.genome in pick }
       gtable1 = gtable
         .map {r -> [r.genome, r.species, r.source, r.version, r.assembly, r.url_fas, r.url_gff]}
       gtable2 = gtable.map {r -> [r.genome, r.gap, r.prefix]}

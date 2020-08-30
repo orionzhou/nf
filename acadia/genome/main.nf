@@ -14,11 +14,8 @@ prep_params(params, workflow)
   design = Channel
     .fromPath(params.design, checkIfExists: true)
     .ifEmpty { exit 1, "genome design table missing: ${params.design}" }
-  gtable = design
-    .splitCsv(header:true, sep:'\t')
-    .filter { it.run == 'T' }
 
-include genome from '../modules/genome.nf'
+include {genome} from '../modules/genome.nf'
 //include {version; outdoc} from '../modules/genome.nf'
 
 def sum = summary()
@@ -27,7 +24,8 @@ check_host()
 
 workflow {
   main:
-    genome(gtable)
+    pick = file(params.pick).readLines()
+    genome(design, pick)
     //version()
     //outdoc(ch_out_doc)
   //publish:

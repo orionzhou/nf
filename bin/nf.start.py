@@ -97,6 +97,7 @@ def nf_start(args):
                      strand = srd,
                      ase = str(args.ase).lower(),
                      ril = str(args.ril).lower(),
+                     cage = str(args.cage).lower(),
                      salmon = str(args.salmon).lower(),
                      stringtie = str(args.stringtie).lower(),
 
@@ -165,6 +166,7 @@ if __name__ == "__main__":
     g1.add_argument('--strand', default='false', help = 'read strandedness')
     g1.add_argument('--ase', action='store_true', help='allele specific expression?')
     g1.add_argument('--ril', action='store_true', help='genotype (ril) samples?')
+    g1.add_argument('--cage', action='store_true', help='run CAGE pipeline?')
     g1.add_argument('--salmon', action='store_true', help='run salmon?')
     g1.add_argument('--stringtie', action='store_true', help='run stringtie?')
 

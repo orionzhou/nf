@@ -12,24 +12,25 @@ def get_gsize(fs):
     cl = pd.read_csv(fs, sep="\t", header=None, names=['chrom','size'])
     return sum(cl['size'])
 
-def dump(args):
+def main(args):
     cvts = dict(genome=str,species=str,source=str)
-    gl = pd.read_csv(args.fo, sep="\t", header=0, converters=cvts,
+    gl = pd.read_csv(args.fi, sep="\t", header=0, converters=cvts,
                      true_values=['1','Y','Yes','T','True'],
                      false_values=['0','N','No','F','False'])
 
     jd = dict()
     for i in range(len(gl)):
-        genome, species, source, run = \
-            gl['genome'][i], gl['species'][i], gl['source'][i], gl['run'][i]
-        if not run in ['C','T']: continue
+        genome, species, source, status = \
+            gl['genome'][i], gl['species'][i], gl['source'][i], gl['status'][i]
+        #if not status in ['C','T']: continue
         jd1 = dict()
-        pre = "%s/%s" % (args.dirg, genome)
+        pre = "%s/data/%s" % (args.dirg, genome)
         jd1['fasta'] = "%s/10.fasta" % pre
         jd1['fasta_idx'] = "%s/10.fasta.fai" % pre
         jd1['genome_bed'] = "%s/15_intervals/01.chrom.bed" % pre
         jd1['genome_sizes'] = "%s/15_intervals/01.chrom.sizes" % pre
-        jd1['macs_gsize'] = get_gsize(jd1['genome_sizes'])
+        if op.isfile(jd1['genome_sizes']):
+            jd1['macs_gsize'] = get_gsize(jd1['genome_sizes'])
         # annotation
         jd1['gff'] = "%s/50_annotation/10.gff" % pre
         jd1['gtf'] = "%s/50_annotation/10.gtf" % pre
@@ -63,14 +64,10 @@ def dump(args):
 
     #j = dict(params = dict(genomes = jd))
     j = dict(genomes = jd)
+    with open(args.fo, 'w') as outfile:
+        yaml.dump(j, outfile)
     # with open(args.json, 'w') as outfile:
         # json.dump(j, outfile)
-    with open(args.yaml, 'w') as outfile:
-        yaml.dump(j, outfile)
-
-def main(args):
-    os.system("readGs.py --sheet genomes > %s" % args.fo)
-    dump(args)
 
 if __name__ == "__main__":
     import argparse
@@ -79,10 +76,10 @@ if __name__ == "__main__":
         description = "prepare genome config file for nextflow pipelines"
     )
 
-    ps.add_argument('--fo', default='genomes.tsv', help = 'output tsv file')
+    ps.add_argument('fi', help = 'input genome tsv')
+    ps.add_argument('fo', help = 'output yaml file')
+    ps.add_argument('--dirg', default=os.environ["genome"], help='genome directory')
 #    ps.add_argument('--json', default='genomes.json', help = 'output json file')
-    ps.add_argument('--yaml', default='genomes.yml', help = 'output yaml file')
-    ps.add_argument('--dirg', default='/home/springer/zhoux379/projects/genome/data', help='genome directory')
 
     args = ps.parse_args()
     main(args)

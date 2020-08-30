@@ -39,7 +39,7 @@ log.info show_header(sum)
 
 workflow {
   main:
-    //mmk(seqdb, mtfs, mtf, fimo_bg)
+    mmk(seqdb, mtfs, mtf, fimo_bg)
     mmd(seqdb, lsts, bg_lsts, lst_pairs)
   //publish:
     //mmk.out.fimo to: "${params.outdir}/11_fimo_raw", mode:'copy', overwrite: true

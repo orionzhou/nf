@@ -35,6 +35,7 @@ process hs2 {
   """
   hisat2 -x ${params.hisat2_index} \\
      ${input} $opt_splice $strandness \\
+     --sp 1,0.2 --score-min L,0,-1 \\
      -p ${task.cpus} --met-stderr --new-summary \\
      --summary-file ${id}.hisat2_summary.txt $rg \\
      | samtools view -bSh -o ${id}.bam -
@@ -67,24 +68,24 @@ process star {
   def avail_mem = "--limitBAMsortRAM ${task.memory.toBytes() - 100000000}"
   seq_center = params.seq_center ? 'CN:$params.seq_center' : ''
   unaligned = params.save_unmapped ? "--outReadsUnmapped Fastx" : ''
-  extra = """
-      --outSAMmapqUnique 60 \\
-      --outFilterType BySJout \\
-      --outFilterMultimapNmax 10 \\
-      --outFilterMismatchNmax 999 \\
-      --outFilterMismatchNoverLmax 1 \\
-      --outFilterMismatchNoverReadLmax 1.0 \\
-      --outFilterMatchNminOverLread 0 \\
-      --outFilterMatchNmin 0 \\
-      --outFilterScoreMinOverLread 0 \\
-      --alignSJoverhangMin 8 \\
-      --alignSJDBoverhangMin 1 \\
-      --alignIntronMin 20 \\
-      --alignIntronMax 1000000 \\
-      --alignMatesGapMax 1000000 \\
-      --outSAMunmapped Within KeepPairs \\
-      --outSAMattrRGline ID:$name $seq_center 'SM:$id'
-      """.stripIndent()
+  extra = """\\
+    --outFilterType BySJout \\
+    --outSAMmapqUnique 60 \\
+    --outFilterMultimapNmax 10 \\
+    --outFilterMismatchNmax 999 \\
+    --outFilterMismatchNoverLmax 1 \\
+    --outFilterMismatchNoverReadLmax 1.0 \\
+    --outFilterMatchNminOverLread 0 \\
+    --outFilterMatchNmin 0 \\
+    --outFilterScoreMinOverLread 0 \\
+    --alignSJoverhangMin 8 \\
+    --alignSJDBoverhangMin 1 \\
+    --alignIntronMin 20 \\
+    --alignIntronMax 1000000 \\
+    --alignMatesGapMax 1000000 \\
+    --outSAMunmapped Within KeepPairs \\
+    --outSAMattrRGline ID:$id $seq_center 'SM:$id'
+    """.stripIndent()
   """
   STAR --genomeDir $index \\
     --sjdbGTFfile $gtf \\
@@ -92,12 +93,13 @@ process star {
     --readFilesIn $reads  \\
     --readFilesCommand zcat \\
     --twopassMode Basic \\
-    --outWigType bedGraph \\
-    --outSAMtype SAM Unsorted $avail_mem \\
+    --outSAMtype BAM Unsorted $avail_mem \\
+    --outFileNamePrefix ${id}_ \\
     --runDirPerm All_RWX $unaligned \\
-    --outFileNamePrefix $id \\
     --outStd Log $extra
+  mv ${id}_Aligned.out.bam ${id}.bam
   """
+    //--outWigType bedGraph \\
 }
 
 process bwa {
