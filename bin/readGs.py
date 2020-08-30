@@ -35,7 +35,7 @@ if __name__ == '__main__':
     )
     p.add_argument('--book', default='maize_studies', help = 'name of google spreadsheet')
     p.add_argument('--sheet', default='all', help = 'sheet/tab name')
-    p.add_argument('--cred', default='/home/springer/zhoux379/.config/google_account_token.json', help = 'google credential')
+    p.add_argument('--cred', default='$HOME/.config/google_account_token.json', help = 'google credential')
     p.add_argument('--workflow', default='', help='filter by workflow')
 
     args = p.parse_args()
