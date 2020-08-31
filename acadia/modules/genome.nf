@@ -12,9 +12,9 @@ process download {
   script:
   species = species.replaceAll('\\s','_')
   assembly = assembly.replaceAll('\\s','_')
-  url_pre = "ftp://ftp.ensemblgenomes.org/pub/plants/release-${version}"
+  url_pre = "ftp://ftp.ensemblgenomes.org/pub/plants/release-${version.replaceAll(/\.[0-9]+$/,'')}"
   url_fas = source=='ensembl_plants' ? "${url_pre}/fasta/${species.toLowerCase()}/dna/${species}.${assembly}.dna.toplevel.fa.gz" : url_fas
-  url_gff = source=='ensembl_plants' ? "${url_pre}/gff3/${species.toLowerCase()}/${species}.${assembly}.${version}.gff3.gz" : url_gff
+  url_gff = source=='ensembl_plants' ? "${url_pre}/gff3/${species.toLowerCase()}/${species}.${assembly}.${version.replaceAll(/\.[0-9]+$/,'')}.gff3.gz" : url_gff
   if (source == 'local')
     """
     ln -f ${url_fas} raw.fasta
