@@ -58,7 +58,7 @@ process seqfmt {
 
   fasta.py rename $fi renamed.fna forward.bed reverse.bed \\
     --opt ${id} ${merge_tag} \\
-    --gap ${gap} --prefix_chr ${chr_prefix}
+    --gap ${gap.replaceAll(/\.[0-9]+$/,'')} --prefix_chr ${chr_prefix}
 
   fasta.py size renamed.fna > renamed.sizes
   chain.py fromBed forward.bed raw.sizes renamed.sizes > forward.chain
