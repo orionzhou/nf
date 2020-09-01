@@ -34,9 +34,15 @@ def main(args):
         # annotation
         jd1['gff'] = "%s/50_annotation/10.gff" % pre
         jd1['gtf'] = "%s/50_annotation/10.gtf" % pre
-        jd1['bed12'] = "%s/50_annotation/10.bed" % pre
-        jd1['transcript_fasta'] = "%s/50_annotation/10.fna" % pre
-        jd1['tss_bed'] = "%s/50_annotation/10.tss.bed" % pre
+        jd1['bed'] = "%s/50_annotation/10.bed" % pre
+        jd1['fna'] = "%s/50_annotation/10.nt.fasta" % pre
+        jd1['faa'] = "%s/50_annotation/10.aa.fasta" % pre
+        jd1['tss'] = "%s/50_annotation/10.tss.bed" % pre
+        jd1['pgff'] = "%s/50_annotation/15.gff" % pre
+        jd1['pgtf'] = "%s/50_annotation/15.gtf" % pre
+        jd1['pbed'] = "%s/50_annotation/15.bed" % pre
+        jd1['pfna'] = "%s/50_annotation/15.nt.fasta" % pre
+        jd1['pfaa'] = "%s/50_annotation/15.aa.fasta" % pre
         if gl['star'][i]:
             jd1['star'] = "%s/21_dbs/star/" % pre
         if gl['hisat2'][i]:

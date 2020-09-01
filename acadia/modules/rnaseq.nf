@@ -79,19 +79,19 @@ process rseqc {
   !params.skip_qc && !params.skip_rseqc
 
   input:
-  tuple id, path(bam), path(bai), path(bed12)
+  tuple id, path(bam), path(bai), path(bed)
 
   output:
   path("*.{txt,pdf,r,xls}")
 
   script:
   """
-  infer_experiment.py -i $bam -r $bed12 > ${id}.infer_experiment.txt
-  junction_annotation.py -i $bam -o ${id}.rseqc -r $bed12 2> ${id}.junction_annotation_log.txt
+  infer_experiment.py -i $bam -r $bed > ${id}.infer_experiment.txt
+  junction_annotation.py -i $bam -o ${id}.rseqc -r $bed 2> ${id}.junction_annotation_log.txt
   bam_stat.py -i $bam 2> ${id}.bam_stat.txt
-  junction_saturation.py -i $bam -o ${id}.rseqc -r $bed12
-  inner_distance.py -i $bam -o ${id}.rseqc -r $bed12
-  read_distribution.py -i $bam -r $bed12 > ${id}.read_distribution.txt
+  junction_saturation.py -i $bam -o ${id}.rseqc -r $bed
+  inner_distance.py -i $bam -o ${id}.rseqc -r $bed
+  read_distribution.py -i $bam -r $bed > ${id}.read_distribution.txt
   read_duplication.py -i $bam -o ${id}.read_duplication
   """
 }
@@ -348,7 +348,7 @@ process vnt2 {
 include {get_ch_bcf} from "./utils.nf"
 include {ase1; ase2} from './ase.nf'
 include {ril1; ril2; ril3} from './ril.nf'
-include {cage1} from './cage.nf'
+include {cage1; cage2} from './cage.nf'
 
 workflow rnaseq {
   take:
@@ -358,10 +358,13 @@ workflow rnaseq {
   main:
     gtf = Channel.fromPath(params.gtf, checkIfExists: true)
        .ifEmpty { exit 1, "GTF annotation file not found: ${params.gtf}" }
-    bed12 = Channel
-      .fromPath(params.bed12, checkIfExists: true)
-      .ifEmpty { exit 1, "BED12 annotation file not found: ${params.bed12}" }
-    rseqc(bams.combine(bed12))
+    bed = Channel
+      .fromPath(params.bed, checkIfExists: true)
+      .ifEmpty { exit 1, "BED annotation file not found: ${params.bed}" }
+    pbed = Channel
+      .fromPath(params.pbed, checkIfExists: true)
+      .ifEmpty { exit 1, "BED annotation file not found: ${params.pbed}" }
+    rseqc(bams.combine(bed))
     qmap(bams.combine(gtf).join(reads))
     duprad(bams.combine(gtf).join(reads))
 
@@ -382,9 +385,9 @@ workflow rnaseq {
       salmon_index = Channel
         .fromPath(params.salmon_index, checkIfExists: true)
         .ifEmpty { exit 1, "Salmon index not found: ${params.salmon_index}" }
-      transcript_fasta = Channel
-        .fromPath(params.transcript_fasta, checkIfExists: true)
-        .ifEmpty { exit 1, "Transcript fasta file not found: ${params.transcript_fasta}" }
+      fna = Channel
+        .fromPath(params.fna, checkIfExists: true)
+        .ifEmpty { exit 1, "Transcript fasta file not found: ${params.fna}" }
       tx2gene = Channel
         .fromPath(params.tx2gene, checkIfExists: true)
         .ifEmpty { exit 1, "tx2gene not found: ${params.tx2gene}" }
@@ -440,7 +443,8 @@ workflow rnaseq {
     cage = Channel.empty();
     if (params.cage) {
       cage1(bams)
-      cage = cage1.out
+      bigwigs = cage1.out
+      cage2(bigwigs.collect({[it[1],it[2]]}).flatten(),  pbed)
     }
 
     vnt_vcf = Channel.empty()
@@ -487,7 +491,7 @@ workflow rnaseq {
     ril_csv = ril_csv
     ril_txt = ril_txt
     vnt_vcf = vnt_vcf
-    cage = cage
+    cage = bigwigs
 }
 
 process mg {

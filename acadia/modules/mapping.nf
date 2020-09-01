@@ -35,7 +35,7 @@ process hs2 {
   """
   hisat2 -x ${params.hisat2_index} \\
      ${input} $opt_splice $strandness \\
-     --sp 1,0.2 --score-min L,0,-1 \\
+     --sp 1,0.1 --score-min L,0,-1.5 \\
      -p ${task.cpus} --met-stderr --new-summary \\
      --summary-file ${id}.hisat2_summary.txt $rg \\
      | samtools view -bSh -o ${id}.bam -
