@@ -46,7 +46,7 @@ process ril2 {
 process ril3 {
   label "process_medium"
   tag "${params.name}.$rid"
-  conda '/home/springer/zhoux379/software/miniconda3/envs/snpbinner'
+  conda "$NXF_CONDA_CACHEDIR/snpbinner"
 
   input:
   tuple path(vcf), path(tbi), rid, region

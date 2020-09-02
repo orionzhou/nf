@@ -158,7 +158,7 @@ process picard {
 process mgstat {
   label "low_memory"
   tag "${params.name}"
-  conda '/home/springer/zhoux379/software/miniconda3/envs/r'
+  conda "$NXF_CONDA_CACHEDIR/r"
 
   input:
   path bamstats
@@ -688,7 +688,7 @@ workflow chipseq {
 process mg {
   label "mid_memory"
   tag "${params.name}"
-  conda '/home/springer/zhoux379/software/miniconda3/envs/r'
+  conda "$NXF_CONDA_CACHEDIR/r"
   publishDir "${params.outdir}/50_final", mode:'link', overwrite:'true'
 
   input:

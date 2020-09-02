@@ -433,7 +433,7 @@ process i_rcfg {
   label 'mid_memory'
   tag "$id"
   publishDir "${params.outdir}/$id", mode:"copy", overwrite:'true'
-  conda '/home/springer/zhoux379/software/miniconda3/envs/r'
+  conda "$NXF_CONDA_CACHEDIR/r"
 
   when: tag == 'T'
 

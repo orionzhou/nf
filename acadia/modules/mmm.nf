@@ -112,7 +112,7 @@ process dreme {
 
 process mg_fimo {
   label 'medium_memory'
-  conda '/home/springer/zhoux379/software/miniconda3/envs/r'
+  conda "$NXF_CONDA_CACHEDIR/r"
   publishDir "${params.outdir}", mode:'copy', overwrite: true
 
   input:
@@ -130,7 +130,7 @@ process mg_fimo {
 
 process mg_dreme {
   label 'medium_memory'
-  conda '/home/springer/zhoux379/software/miniconda3/envs/r'
+  conda "$NXF_CONDA_CACHEDIR/r"
   publishDir "${params.outdir}", mode:'copy', overwrite: true
 
   input:

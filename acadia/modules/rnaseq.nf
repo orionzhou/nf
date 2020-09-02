@@ -497,7 +497,7 @@ workflow rnaseq {
 process mg {
   label "mid_memory"
   tag "${params.name}"
-  conda '/home/springer/zhoux379/software/miniconda3/envs/r'
+  conda "$NXF_CONDA_CACHEDIR/r"
   publishDir "${params.outdir}/50_final", mode:'link', overwrite:'true'
   publishDir "${params.qcdir}/${params.genome}/${params.name}", mode:'copy', overwrite:'true'
 
@@ -558,7 +558,7 @@ process mg {
 process renorm {
   label 'process_medium'
   tag "${params.name}"
-  conda '/home/springer/zhoux379/software/miniconda3/envs/r'
+  conda "$NXF_CONDA_CACHEDIR/r"
   publishDir "${params.outdir}/50_final", mode:'link', overwrite:'true'
   publishDir "${params.qcdir}/${params.genome}/${params.name}", mode:'copy', overwrite:'true'
 

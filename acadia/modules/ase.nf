@@ -2,7 +2,7 @@
 process ase1 {
   label "process_medium"
   tag "$name"
-  //conda '/home/springer/zhoux379/software/miniconda3/envs/alfred'
+  //conda "$NXF_CONDA_CACHEDIR/alfred"
 
   input:
   tuple name, path(bam), path(bai), path(bcf), path(csi), path(ref)
