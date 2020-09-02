@@ -444,7 +444,7 @@ workflow rnaseq {
     if (params.cage) {
       cage1(bams)
       bigwigs = cage1.out
-      cage2(bigwigs.collect({[it[1],it[2]]}).flatten(),  pbed)
+      cage2(bigwigs.collect({[it[1],it[2]]}).flatten().toSortedList(),  pbed)
     }
 
     vnt_vcf = Channel.empty()
@@ -499,7 +499,7 @@ process mg {
   tag "${params.name}"
   conda '/home/springer/zhoux379/software/miniconda3/envs/r'
   publishDir "${params.outdir}/50_final", mode:'link', overwrite:'true'
-  publishDir "${params.qcdir}/${params.name}", mode:'copy', overwrite:'true'
+  publishDir "${params.qcdir}/${params.genome}/${params.name}", mode:'copy', overwrite:'true'
 
   input:
   path meta
@@ -560,7 +560,7 @@ process renorm {
   tag "${params.name}"
   conda '/home/springer/zhoux379/software/miniconda3/envs/r'
   publishDir "${params.outdir}/50_final", mode:'link', overwrite:'true'
-  publishDir "${params.qcdir}/${params.name}", mode:'copy', overwrite:'true'
+  publishDir "${params.qcdir}/${params.genome}/${params.name}", mode:'copy', overwrite:'true'
 
   input:
   path meta
@@ -583,6 +583,11 @@ process mqc {
   label 'low_memory'
   tag "${params.name}"
   publishDir "${params.outdir}/40_multiqc", mode:'link', overwrite:'true'
+  publishDir "${params.s3dir}/${params.genome.toLowerCase().replaceAll(/_/, "-")}", mode:'copy', overwrite:'true',
+    saveAs: { fn ->
+      if (fn.indexOf(".html") > 0) "$fn"
+      else null
+    }
 
   when:
   !params.skip_multiqc

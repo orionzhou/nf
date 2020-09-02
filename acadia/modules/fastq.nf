@@ -175,7 +175,7 @@ process upd {
   tag "${params.name}"
   conda '/home/springer/zhoux379/software/miniconda3/envs/r'
   publishDir "${params.outdir}", mode:'copy', overwrite:'true'
-  publishDir "${params.qcdir}/${params.name}", mode:'copy', overwrite:'true'
+  publishDir "${params.qcdir}/${params.genome}/${params.name}", mode:'copy', overwrite:'true'
 
   input:
   path(design)
