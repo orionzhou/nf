@@ -79,7 +79,7 @@ process rseqc {
   !params.skip_qc && !params.skip_rseqc
 
   input:
-  tuple id, path(bam), path(bai), path(bed)
+  tuple val(id), path(bam), path(bai), path(bed)
 
   output:
   path("*.{txt,pdf,r,xls}")
@@ -105,7 +105,7 @@ process qmap {
   !params.skip_qc && !params.skip_qualimap
 
   input:
-  tuple id, path(bam), path(bai), path(gtf), paired, path(reads)
+  tuple val(id), path(bam), path(bai), path(gtf), val(paired), path(reads)
 
   output:
   path "${id}"
@@ -139,7 +139,7 @@ process duprad {
   !params.skip_qc && !params.skip_dupradar
 
   input:
-  tuple id, path(bam), path(bai), path(gtf), paired, path(reads)
+  tuple val(id), path(bam), path(bai), path(gtf), val(paired), path(reads)
 
   output:
   path "*.{pdf,txt}"
@@ -164,7 +164,7 @@ process fcnt {
     }
 
   input:
-  tuple id, path(bam), path(bai), path(gtf), path(biotypes_header)
+  tuple val(id), path(bam), path(bai), path(gtf), path(biotypes_header)
 
   output:
   path "${id}_gene.featureCounts.txt", emit: txt
@@ -240,7 +240,7 @@ process stie {
   params.run_stringtie
 
   input:
-  tuple name, path(bam), path(bai), path(gtf)
+  tuple val(name), path(bam), path(bai), path(gtf)
 
   output:
   path "${name}_transcripts.gtf", emit: gtf
@@ -271,7 +271,7 @@ process salm {
   params.run_salmon
 
   input:
-  tuple name, paired, path(reads), path(index), path(gtf), path("tx2gene.csv")
+  tuple val(name), val(paired), path(reads), path(index), path(gtf), path("tx2gene.csv")
 
   output:
   path "${name}_salmon_gene_counts.csv", emit: gcnt

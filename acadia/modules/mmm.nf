@@ -5,10 +5,10 @@ process seqret {
   publishDir "${params.outdir}/21_seqs", mode:'copy', overwrite: true
 
   input:
-  tuple id, path(lst), path(seqdb), path(seqdb_idx)
+  tuple val(id), path(lst), path(seqdb), path(seqdb_idx)
 
   output:
-  tuple id, path("${id}.fas")
+  tuple val(id), path("${id}.fas")
 
   script:
   """
@@ -21,11 +21,11 @@ process fimo_old {
   tag "$id"
 
   input:
-  tuple id, path(seq), path(mtf), path(bg)
+  tuple val(id), path(seq), path(mtf), path(bg)
 
   output:
-  tuple id, path("${id}.raw.tsv"), emit: raw
-  tuple id, path("${id}.sum.tsv"), emit: sum
+  tuple val(id), path("${id}.raw.tsv"), emit: raw
+  tuple val(id), path("${id}.sum.tsv"), emit: sum
 
   script:
   """
@@ -49,10 +49,10 @@ process fimo {
     }
 
   input:
-  tuple id, path(mtf), path(seq), path(seq_idx), path(bg)
+  tuple val(id), path(mtf), path(seq), path(seq_idx), path(bg)
 
   output:
-  tuple id, path("${id}.tsv")
+  tuple val(id), path("${id}.tsv")
 
   script:
   pval = 1e-4
@@ -67,10 +67,10 @@ process meme {
   tag "$id"
 
   input:
-  tuple id, clid, path(seq), path(cseq)
+  tuple val(id), val(clid), path(seq), path(cseq)
 
   output:
-  tuple id, path("${id}.txt")
+  tuple val(id), path("${id}.txt")
 
   script:
   """
@@ -91,10 +91,10 @@ process dreme {
     }
 
   input:
-  tuple id, clid, path(seq), path(cseq)
+  tuple val(id), val(clid), path(seq), path(cseq)
 
   output:
-  tuple id, path("${id}.dreme"), path("${id}.tsv")
+  tuple val(id), path("${id}.dreme"), path("${id}.tsv")
 
   script:
   mink = 6

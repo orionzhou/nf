@@ -3,10 +3,10 @@ process ril1 {
   tag "${params.name}.$rid"
 
   input:
-  tuple path(bams), path(bais), path(ref), path(sites), path(sites_idx), rid, region
+  tuple path(bams), path(bais), path(ref), path(sites), path(sites_idx), val(rid), val(region)
 
   output:
-  tuple rid, path("${rid}.vcf.gz"), path("${rid}.vcf.gz.tbi")
+  tuple val(rid), path("${rid}.vcf.gz"), path("${rid}.vcf.gz.tbi")
 
   when:
   params.ril
@@ -24,7 +24,7 @@ process ril2 {
   tag "${params.name}"
 
   input:
-  val rids
+  val(rids)
   path(vcfs)
   path(tbis)
 
@@ -49,7 +49,7 @@ process ril3 {
   conda "$NXF_CONDA_CACHEDIR/snpbinner"
 
   input:
-  tuple path(vcf), path(tbi), rid, region
+  tuple path(vcf), path(tbi), val(rid), val(region)
 
   output:
   path "${rid}.csv", emit: csv

@@ -5,10 +5,10 @@ process ase1 {
   //conda "$NXF_CONDA_CACHEDIR/alfred"
 
   input:
-  tuple name, path(bam), path(bai), path(bcf), path(csi), path(ref)
+  tuple val(name), path(bam), path(bai), path(bcf), path(csi), path(ref)
 
   output:
-  tuple name, path("${name}.tsv.gz"), path("${name}.1.bam"), path("${name}.2.bam")
+  tuple val(name), path("${name}.tsv.gz"), path("${name}.1.bam"), path("${name}.2.bam")
 
   when:
   params.ase && bcf.exists()
@@ -32,7 +32,7 @@ process ase2 {
   params.ase
 
   input:
-  tuple name, path(tsv), path(bam1), path(bam2), path(gtf)
+  tuple val(name), path(tsv), path(bam1), path(bam2), path(gtf)
 
   output:
   path "$tsv", emit: snp

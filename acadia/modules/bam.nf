@@ -5,10 +5,10 @@ process bamsort {
   //  saveAs: { fn -> params.saveBAM ? fn : null }
 
   input:
-  tuple id, path(ibams)
+  tuple val(id), path(ibams)
 
   output:
-  tuple id, path("${id}.sorted.bam"), path("${id}.sorted.bam.bai")
+  tuple val(id), path("${id}.sorted.bam"), path("${id}.sorted.bam.bai")
 
   script:
   def suff_mem = ("${(task.memory.toBytes() - 6000000000) / task.cpus}" > 2000000000) ? 'true' : 'false'
@@ -29,10 +29,10 @@ process markdup {
     }
 
   input:
-  tuple id, path(bam), path(bai)
+  tuple val(id), path(bam), path(bai)
 
   output:
-  tuple id, path("${id}.bam"), path("${id}.bam.bai"), emit: bam
+  tuple val(id), path("${id}.bam"), path("${id}.bam.bai"), emit: bam
   path "${id}.txt", emit: metric
 
   script:
@@ -56,7 +56,7 @@ process bamstat {
   publishDir "${params.outdir}/20_bam/stats", mode:'link', overwrite:'true'
 
   input:
-  tuple id, path(bam), path(bai)
+  tuple val(id), path(bam), path(bai)
 
   output:
   path "${id}.stat.tsv"
@@ -76,7 +76,7 @@ process pseq {
   publishDir "${params.outdir}/23_preseq", mode:'link', overwrite:'true'
 
   input:
-  tuple id, path(bam), path(bai), spots
+  tuple val(id), path(bam), path(bai), val(spots)
 
   when:
   !params.skip_qc && !params.skip_preseq && spots >= params.preseq_min_reads

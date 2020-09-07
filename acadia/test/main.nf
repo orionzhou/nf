@@ -1,5 +1,5 @@
 #!/usr/bin/env nextflow
-nextflow.preview.dsl = 2
+nextflow.enable.dsl = 2
 
 ch = Channel.from( [['r08','j'], ['r06','hj'], ['r05', 'hkk']])
 ch2 = Channel.from( [['r04','j'], ['r05','hj'], ['r06', 'hkk']])

@@ -3,11 +3,11 @@ process download {
   tag "$id"
 
   input:
-  tuple id, species, source, version, assembly, url_fas, url_gff
+  tuple val(id), val(species), val(source), val(version), val(assembly), val(url_fas), val(url_gff)
 
   output:
-  tuple id, path("raw.fasta"), emit: seq
-  tuple id, path("raw.gff"), emit: gff
+  tuple val(id), path("raw.fasta"), emit: seq
+  tuple val(id), path("raw.gff"), emit: gff
 
   script:
   species = species.replaceAll('\\s','_')
@@ -39,15 +39,15 @@ process seqfmt {
       }
 
   input:
-  tuple id, path(fi), gap, chr_prefix
+  tuple val(id), path(fi), val(gap), val(chr_prefix)
 
   output:
-  tuple id, path("10.fasta"), path("10.fasta.fai"), emit: seq
-  tuple id, path("01.chrom.sizes"), emit: chrom_size
-  tuple id, path("01.chrom.bed"), emit: chrom_bed
-  tuple id, path("11.gap.bed"), emit: gap
-  tuple id, path("forward.bed"), path("forward.chain"), emit: fchain
-  tuple id, path("reverse.bed"), path("reverse.chain"), emit: rchain
+  tuple val(id), path("10.fasta"), path("10.fasta.fai"), emit: seq
+  tuple val(id), path("01.chrom.sizes"), emit: chrom_size
+  tuple val(id), path("01.chrom.bed"), emit: chrom_bed
+  tuple val(id), path("11.gap.bed"), emit: gap
+  tuple val(id), path("forward.bed"), path("forward.chain"), emit: fchain
+  tuple val(id), path("reverse.bed"), path("reverse.chain"), emit: rchain
 
   script:
   def merge_tag = id=='Mt_R108' ? '' : '--merge_short'
@@ -78,10 +78,10 @@ process gff_cln {
   publishDir "${params.outdir}/$id/50_annotation", mode:"copy", overwrite:'true'
 
   input:
-  tuple id, path(fi), fixopt, path(fbed), path(fchain)
+  tuple val(id), path(fi), val(fixopt), path(fbed), path(fchain)
 
   output:
-  tuple id, path("10.gff")
+  tuple val(id), path("10.gff")
 
   script:
   """
@@ -96,24 +96,24 @@ process gff_idx {
   publishDir "${params.outdir}/$id/50_annotation", mode:"copy", overwrite:'true'
 
   input:
-  tuple id, path(ref), path(fai), path(gff)
+  tuple val(id), path(ref), path(fai), path(gff)
 
   output:
-  tuple id, path("10.gff.db"), emit: db
-  tuple id, path("10.tsv"), emit: tsv
-  tuple id, path("10.gtf"), emit: gtf
-  tuple id, path("10.bed"), emit: bed
-  tuple id, path("10.desc.tsv"), emit: desc
-  tuple id, path("10.nt.fasta"), emit: fna
-  tuple id, path("10.aa.fasta"), emit: faa
-  tuple id, path("15.gff"), emit: pgff
-  tuple id, path("15.gff.db"), emit: pdb
-  tuple id, path("15.tsv"), emit: ptsv
-  tuple id, path("15.gtf"), emit: pgtf
-  tuple id, path("15.bed"), emit: pbed
-  tuple id, path("15.desc.tsv"), emit: pdesc
-  tuple id, path("15.nt.fasta"), emit: pfna
-  tuple id, path("15.aa.fasta"), emit: pfaa
+  tuple val(id), path("10.gff.db"), emit: db
+  tuple val(id), path("10.tsv"), emit: tsv
+  tuple val(id), path("10.gtf"), emit: gtf
+  tuple val(id), path("10.bed"), emit: bed
+  tuple val(id), path("10.desc.tsv"), emit: desc
+  tuple val(id), path("10.nt.fasta"), emit: fna
+  tuple val(id), path("10.aa.fasta"), emit: faa
+  tuple val(id), path("15.gff"), emit: pgff
+  tuple val(id), path("15.gff.db"), emit: pdb
+  tuple val(id), path("15.tsv"), emit: ptsv
+  tuple val(id), path("15.gtf"), emit: pgtf
+  tuple val(id), path("15.bed"), emit: pbed
+  tuple val(id), path("15.desc.tsv"), emit: pdesc
+  tuple val(id), path("15.nt.fasta"), emit: pfna
+  tuple val(id), path("15.aa.fasta"), emit: pfaa
 
   script:
   """
@@ -145,10 +145,10 @@ process i_blat {
   when: tag == 'T'
 
   input:
-  tuple id, path(ref), path(fai), tag
+  tuple val(id), path(ref), path(fai), val(tag)
 
   output:
-  tuple id, path("db.2bit"), path("db.2bit.tile11.ooc")
+  tuple val(id), path("db.2bit"), path("db.2bit.tile11.ooc")
 
   script:
   """
@@ -165,10 +165,10 @@ process i_gatk {
   when: tag == 'T'
 
   input:
-  tuple id, path(ref), path(fai), tag
+  tuple val(id), path(ref), path(fai), val(tag)
 
   output:
-  tuple id, val(pre), path("gatk/*")
+  tuple val(id), val(pre), path("gatk/*")
 
   script:
   pre = "gatk/db"
@@ -188,10 +188,10 @@ process i_bwa {
   when: tag == 'T'
 
   input:
-  tuple id, path(ref), path(fai), tag
+  tuple val(id), path(ref), path(fai), val(tag)
 
   output:
-  tuple id, pre, path("bwa/*")
+  tuple val(id), pre, path("bwa/*")
 
   script:
   pre = "bwa/db"
@@ -210,10 +210,10 @@ process i_bismark {
   when: tag == 'T'
 
   input:
-  tuple id, path(ref), path(fai), tag
+  tuple val(id), path(ref), path(fai), val(tag)
 
   output:
-  tuple id, pre, path("bismark/*")
+  tuple val(id), pre, path("bismark/*")
 
   script:
   pre = "bismark"
@@ -233,10 +233,10 @@ process i_blastn {
   when: tag == 'T'
 
   input:
-  tuple id, path(fna), tag
+  tuple val(id), path(fna), val(tag)
 
   output:
-  tuple id, pre, path("blastn/*")
+  tuple val(id), val(pre), path("blastn/*")
 
   script:
   pre = "blastn/db"
@@ -254,10 +254,10 @@ process i_blastp {
   when: tag == 'T'
 
   input:
-  tuple id, path(faa), tag
+  tuple val(id), path(faa), val(tag)
 
   output:
-  tuple id, pre, path("blastp/*")
+  tuple val(id), val(pre), path("blastp/*")
 
   script:
   pre = "blastp/db"
@@ -275,10 +275,10 @@ process i_lastn {
   when: tag == 'T'
 
   input:
-  tuple id, path(fna), tag
+  tuple val(id), path(fna), val(tag)
 
   output:
-  tuple id, val(pre), path("lastn/*")
+  tuple val(id), val(pre), path("lastn/*")
 
   script:
   pre = "lastn/db"
@@ -296,10 +296,10 @@ process i_lastp {
   when: tag == 'T'
 
   input:
-  tuple id, path(faa), tag
+  tuple val(id), path(faa), val(tag)
 
   output:
-  tuple id, val(pre), path("lastp/*")
+  tuple val(id), val(pre), path("lastp/*")
 
   script:
   pre = "lastp/db"
@@ -317,10 +317,10 @@ process i_salmon {
   when: tag == 'T'
 
   input:
-  tuple id, path(fna), tag
+  tuple val(id), path(fna), val(tag)
 
   output:
-  tuple id, val(pre), path("salmon/*")
+  tuple val(id), val(pre), path("salmon/*")
 
   script:
   pre = "salmon/db"
@@ -339,10 +339,10 @@ process i_star {
   when: tag == 'T'
 
   input:
-  tuple id, path(ref), path(fai), path(gtf), tag
+  tuple val(id), path(ref), path(fai), path(gtf), val(tag)
 
   output:
-  tuple id, pre, path("star/*")
+  tuple val(id), pre, path("star/*")
 
   script:
   pre = "star"
@@ -362,10 +362,10 @@ process i_hisat2 {
   when: tag == 'T'
 
   input:
-  tuple id, path(ref), path(fai), path(gtf), tag
+  tuple val(id), path(ref), path(fai), path(gtf), val(tag)
 
   output:
-  tuple id, pre, path("hisat2/*")
+  tuple val(id), val(pre), path("hisat2/*")
 
   script:
   pre = "hisat2/db"
@@ -386,10 +386,10 @@ process i_snpeff {
   when: tag == 'T'
 
   input:
-  tuple id, path(ref), path(fai), path(gtf), tag
+  tuple val(id), path(ref), path(fai), path(gtf), val(tag)
 
   output:
-  tuple id, path("snpeff/$cfg"), path("snpeff/*")
+  tuple val(id), path("snpeff/$cfg"), path("snpeff/*")
 
   script:
   cfg = 'snpEff.config'
@@ -411,10 +411,10 @@ process i_tandup {
   when: tag == 'T'
 
   input:
-  tuple id, path(fna), path(faa), path(gbed), blastn_pre, path("blastn/*"), blastp_pre, path("blastp/*"), tag
+  tuple val(id), path(fna), path(faa), path(gbed), val(blastn_pre), path("blastn/*"), val(blastp_pre), path("blastp/*"), tag
 
   output:
-  tuple id, path("05.tandup.cds.tsv"), path("05.tandup.pro.tsv")
+  tuple val(id), path("05.tandup.cds.tsv"), path("05.tandup.pro.tsv")
 
   script:
   """
@@ -438,10 +438,10 @@ process i_rcfg {
   when: tag == 'T'
 
   input:
-  tuple id, path(chrom_size), path(chrom_bed), path(gap_bed), path(ptsv), path(pdes), tag
+  tuple val(id), path(chrom_size), path(chrom_bed), path(gap_bed), path(ptsv), path(pdes), tag
 
   output:
-  tuple id, path("55.rds")
+  tuple val(id), path("55.rds")
 
   script:
   """
