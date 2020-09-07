@@ -1,7 +1,7 @@
 # Project directories
 cache
 logs
-assets
+#assets
 igenomes
 singularity
 results*

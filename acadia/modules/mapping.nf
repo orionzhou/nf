@@ -10,10 +10,10 @@ process hs2 {
     }
 
   input:
-  tuple id, paired, path(reads), pre, path(hs2_indices)
+  tuple val(id), val(paired), path(reads), val(pre), path(hs2_indices)
 
   output:
-  tuple id, path("${id}.bam"), emit: bam
+  tuple val(id), path("${id}.bam"), emit: bam
   path "${id}.hisat2_summary.txt", emit: log
   path "unmapped.hisat2*" optional true
 
@@ -28,14 +28,14 @@ process hs2 {
     strandness = !paired ? '--rna-strandness R' : '--rna-strandness RF'
   }
   input = paired ? "-1 ${reads[0]} -2 ${reads[1]}" : "-U ${reads}"
+  extra = params.cage ? "--sp 1,0.1 --score-min L,0,-2" : ""
   // unaligned = params.save_unmapped ? !paired ? "--un-gz unmapped.hisat2.gz" : "--un-conc-gz unmapped.hisat2.gz" : ''
   // --dta --no-mixed --no-discordant
   // --known-splicesite-infile $splicesites \\
   // ${unaligned} \\
   """
   hisat2 -x ${params.hisat2_index} \\
-     ${input} $opt_splice $strandness \\
-     --sp 1,0.1 --score-min L,0,-1.5 \\
+     ${input} $opt_splice $strandness $extra \\
      -p ${task.cpus} --met-stderr --new-summary \\
      --summary-file ${id}.hisat2_summary.txt $rg \\
      | samtools view -bSh -o ${id}.bam -
@@ -55,10 +55,10 @@ process star {
     }
 
   input:
-  tuple id, paired, path(reads), path(index), path(gtf)
+  tuple val(id), val(paired), path(reads), path(index), path(gtf)
 
   output:
-  tuple id, path('*.bam'), emit: bam
+  tuple val(id), path('*.bam'), emit: bam
   path "*.out", emit: log
   path "*SJ.out.tab"
   path "*Log.out"
@@ -114,10 +114,10 @@ process bwa {
     }
 
   input:
-  tuple id, paired, path(reads), pre, path(index)
+  tuple val(id), val(paired), path(reads), val(pre), path(index)
 
   output:
-  tuple id, path("${id}.bam"), emit: bam
+  tuple val(id), path("${id}.bam"), emit: bam
   path "${id}.log", emit: log optional true
 
   script:
@@ -141,10 +141,10 @@ process bwa_aln {
     }
 
   input:
-  tuple id, paired, path(reads), pre, path(index)
+  tuple val(id), val(paired), path(reads), val(pre), path(index)
 
   output:
-  tuple id, path("${id}.bam"), emit: bam
+  tuple val(id), path("${id}.bam"), emit: bam
   path "${id}.log", emit: log optional true
 
   script:
@@ -176,10 +176,10 @@ process bsmk {
     }
 
   input:
-  tuple id, paired, path(reads), pre, path(index)
+  tuple val(id), val(paired), path(reads), val(pre), path(index)
 
   output:
-  tuple id, path("${id}.bam"), emit: bam
+  tuple val(id), path("${id}.bam"), emit: bam
   path "${id}.txt", emit: log
 
   script:

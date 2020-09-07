@@ -1,5 +1,5 @@
 #!/usr/bin/env nextflow
-nextflow.preview.dsl = 2
+nextflow.enable.dsl = 2
 include {show_header; check_host; yml_summary; has_ext} from '../modules/utils.nf'
 include {help; prep_params; summary} from './helper.nf'
 

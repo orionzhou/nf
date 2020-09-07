@@ -6,10 +6,10 @@ process fqd {
     saveAs: { fn -> params.save_fastq ? "$fn" : null }
 
   input:
-  tuple id, paired, acc
+  tuple val(id), val(paired), val(acc)
 
   output:
-  tuple id, paired, path("${id}_R?.fq.gz")
+  tuple val(id), val(paired), path("${id}_R?.fq.gz")
 
   script:
   def mem = task.memory
@@ -33,10 +33,10 @@ process fqz {
   tag "$id"
 
   input:
-  tuple id, paired, path(r0), path(r1), path(r2), gz0, gz1
+  tuple val(id), val(paired), path(r0), path(r1), path(r2), val(gz0), val(gz1)
 
   output:
-  tuple id, paired, path("${id}_R0.fq.gz"), path("${id}_R1.fq.gz"), path("${id}_R2.fq.gz")
+  tuple val(id), val(paired), path("${id}_R0.fq.gz"), path("${id}_R1.fq.gz"), path("${id}_R2.fq.gz")
 
   script:
   if( paired && gz1 )
@@ -71,10 +71,10 @@ process fqv {
     saveAs: { fn -> params.save_fastq ? "$fn" : null }
 
   input:
-  tuple id, paired, path(r0), path(r1), path(r2)
+  tuple val(id), val(paired), path(r0), path(r1), path(r2)
 
   output:
-  tuple id, paired, path("${id}_R?.fq.gz", includeInputs: true)
+  tuple val(id), val(paired), path("${id}_R?.fq.gz", includeInputs: true)
 
   script:
   if( paired && params.interleaved )
@@ -107,7 +107,7 @@ process fqc {
   !params.skip_qc && !params.skip_fastqc
 
   input:
-  tuple id, paired, path(reads)
+  tuple val(id), val(paired), path(reads)
 
   output:
   path "${id}_*_fastqc.zip", emit: zip
@@ -131,10 +131,10 @@ process trim {
     }
 
   input:
-  tuple id, paired, path(reads)
+  tuple val(id), val(paired), path(reads)
 
   output:
-  tuple id, paired, path("*fq.gz"), emit: reads
+  tuple val(id), val(paired), path("*fq.gz"), emit: reads
   path "*trimming_report.txt", emit: log
   path "*_fastqc.zip", emit: fastqc_zip
   path "*_fastqc.html", emit: fastqc_html

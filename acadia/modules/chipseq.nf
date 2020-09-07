@@ -71,15 +71,15 @@ process fbam {
     }
 
   input:
-  tuple id, path(bam), path(bai)
+  tuple val(id), path(bam), path(bai)
   path genome_bed
   path bamtools_filter_config
 
   output:
-  tuple id, path("${pre}.bam"), path("${pre}.bam.bai"), emit: bam
-  tuple id, path("${pre1}.bam"), emit: nbam
-  tuple id, path("${pre}.flagstat"), emit: flagstat
-  tuple id, path("${pre}.{idxstats,stats}"), emit: stat
+  tuple val(id), path("${pre}.bam"), path("${pre}.bam.bai"), emit: bam
+  tuple val(id), path("${pre1}.bam"), emit: nbam
+  tuple val(id), path("${pre}.flagstat"), emit: flagstat
+  tuple val(id), path("${pre}.{idxstats,stats}"), emit: stat
 
   script:
   pre1 = "${id}.mLb.clN"
@@ -128,12 +128,12 @@ process picard {
   !params.skip_picard_metrics
 
   input:
-  tuple id, path(bam), path(bai)
+  tuple val(id), path(bam), path(bai)
   path genome_fasta
 
   output:
   path "*_metrics", emit: metric
-  tuple id, path("${id}.tsv"), emit: stat
+  tuple val(id), path("${id}.tsv"), emit: stat
   path "*.pdf", emit: pdf
 
   script:
@@ -183,11 +183,11 @@ process bigwig {
     }
 
   input:
-  tuple id, path(bam), path(bai), path(flagstat)
+  tuple val(id), path(bam), path(bai), path(flagstat)
   path genome_sizes
 
   output:
-  tuple id, path("${prefix}.bigWig"), emit: bw
+  tuple val(id), path("${prefix}.bigWig"), emit: bw
   path "*scale_factor.txt", emit: scale
   path "*igv.txt", emit: igv
 
@@ -216,7 +216,7 @@ process metaplot {
   !params.skip_meta_plot
 
   input:
-  tuple id, path(bw)
+  tuple val(id), path(bw)
   path bed
 
   output:
@@ -252,7 +252,7 @@ process spp {
   !params.skip_spp
 
   input:
-  tuple id, path(bam), path(bai)
+  tuple val(id), path(bam), path(bai)
   path spp_correlation_header
   path spp_nsc_header
   path spp_rsc_header
@@ -283,7 +283,7 @@ process finger {
   !params.skip_plot_fingerprint
 
   input:
-  tuple antibody, replicatesExist, multipleGroups, ip, path(ipbam), path(ipbai), control, path(controlbam), path(controlbai), path(ipflagstat)
+  tuple val(antibody), val(replicatesExist), val(multipleGroups), val(ip), path(ipbam), path(ipbai), control, path(controlbam), path(controlbai), path(ipflagstat)
 
   output:
   path '*.{txt,pdf}', emit: result
@@ -320,7 +320,7 @@ process macs2 {
   params.macs_gsize
 
   input:
-  tuple antibody, replicatesExist, multipleGroups, ip, path(ipbam), path(ipbai), control, path(controlbam), path(controlbai), path(ipflagstat)
+  tuple val(antibody), val(replicatesExist), val(multipleGroups), val(ip), path(ipbam), path(ipbai), control, path(controlbam), path(controlbai), path(ipflagstat)
   path peak_count_header
   path frip_score_header
 
@@ -371,7 +371,7 @@ process homer {
   params.macs_gsize
 
   input:
-  tuple antibody, replicatesExist, multipleGroups, ip, control, path(peak)
+  tuple val(antibody), val(replicatesExist), val(multipleGroups), val(ip), val(control), path(peak)
   path fasta
   path gtf
 
@@ -435,11 +435,11 @@ process consensus {
   params.macs_gsize && (replicatesExist || multipleGroups) && peaks.collect().size > 1
 
   input:
-  tuple antibody, replicatesExist, multipleGroups, path(peaks)
+  tuple val(antibody), val(replicatesExist), val(multipleGroups), path(peaks)
 
   output:
-  tuple antibody, replicatesExist, multipleGroups, path("*.bed"), emit: bed
-  tuple antibody, file("*.saf"), emit: saf
+  tuple val(antibody), val(replicatesExist), val(multipleGroups), path("*.bed"), emit: bed
+  tuple val(antibody), file("*.saf"), emit: saf
   path "*.boolean.txt", emit: bool
   path "*.intersect.{txt,plot.pdf}", emit: ovlp
   path "*igv.txt", emit: igv
@@ -480,7 +480,7 @@ process homer2 {
   params.macs_gsize && (replicatesExist || multipleGroups)
 
   input:
-  tuple antibody, replicatesExist, multipleGroups, path(bed)
+  tuple val(antibody), val(replicatesExist), val(multipleGroups), path(bed)
   path bool
   path fasta
   path gtf
@@ -514,7 +514,7 @@ process deseq2 {
   params.macs_gsize && replicatesExist && multipleGroups && !params.skip_diff_analysis
 
   input:
-  tuple antibody, replicatesExist, multipleGroups, path(bams), path(saf)
+  tuple val(antibody), val(replicatesExist), val(multipleGroups), path(bams), path(saf)
   path deseq2_pca_header
   path deseq2_clustering_header
 

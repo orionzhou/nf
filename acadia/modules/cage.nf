@@ -6,10 +6,10 @@ process cage1 {
   conda "$NXF_CONDA_CACHEDIR/cage"
 
   input:
-  tuple id, path(bam), path(bai)
+  tuple val(id), path(bam), path(bai)
 
   output:
-  tuple id, path("${id}.plus.bw"), path("${id}.minus.bw")
+  tuple val(id), path("${id}.plus.bw"), path("${id}.minus.bw")
 
   when:
   params.cage
