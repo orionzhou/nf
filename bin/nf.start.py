@@ -67,9 +67,12 @@ def check_fastq(design):
 
 def nf_start(args):
     yid = args.yid
-    metadir_x, metadir = args.metadir_sx, args.metadir_s
+    barn, genome = args.metadir, args.genome
+    metadir_x = op.join(barn, genome, '08_sra_list_excel')
+    metadir = op.join(barn, genome, '09_sra_list')
     if args.source == "local":
-        metadir_x, metadir = args.metadir_lx, args.metadir_l
+        metadir_x = op.join(barn, genome, '06_local_list_excel')
+        metadir = op.join(barn, genome, '07_local_list')
     xls = "%s/%s.xlsx" % (metadir_x, yid)
     design = "%s/%s.tsv" % (metadir, yid)
     sh("excel.py tsv %s %s" % (xls, design))
@@ -143,21 +146,18 @@ if __name__ == "__main__":
     libs = ['rnaseq','smrnaseq','chipseq','dapseq','atacseq','methylseq','dnaseq']
     ps.add_argument('lib', choices = libs, help = 'library type')
     ps.add_argument('yid', help = 'study/project id')
-    ps.add_argument('--projdir', default='/home/springer/zhoux379/projects', help = 'project dir')
-    ps.add_argument('--cfgdir', default='/home/springer/zhoux379/git/nf/configs/templates', help = 'nextflow template config dir')
-    ps.add_argument('--workdir', default='/scratch.global/zhoux379/nf/work', help = 'nextflow work dir')
-    ps.add_argument('--rawdir', default='/scratch.global/zhoux379/nf/raw', help = 'nextflow raw output dir')
+    ps.add_argument('--projdir', default=os.environ['proj'], help = 'project dir')
+    ps.add_argument('--cfgdir', default="%s/configs/templates" % os.environ['nf'], help = 'nextflow template config dir')
+    ps.add_argument('--workdir', default=os.environ['NXF_WORK'], help = 'nextflow work dir')
+    ps.add_argument('--rawdir', default="%s/raw" % os.environ['NXF_CACHE'], help = 'nextflow raw output dir')
     ps.add_argument('--source', default='sra', choices=['local','sra','sra2'], help='sequence source')
     ps.add_argument('--interleaved', action='store_true', help='sequence source')
-    ps.add_argument('--metadir_lx', default='/home/springer/zhoux379/projects/barn/data/06_local_list_excel', help = 'local meta excels')
-    ps.add_argument('--metadir_l', default='/home/springer/zhoux379/projects/barn/data/07_local_list', help = 'local meta dir')
-    ps.add_argument('--metadir_sx', default='/home/springer/zhoux379/projects/barn/data/08_sra_list_excel', help = 'sra meta excels')
-    ps.add_argument('--metadir_s', default='/home/springer/zhoux379/projects/barn/data/09_sra_list', help = 'sra meta dir')
+    ps.add_argument('--metadir', default=os.environ['ba'], help = 'meta table directory')
+    ps.add_argument('--genome', default='Zmays_B73', help = 'reference genome')
 #    ps.add_argument('--seqdir', default='/scratch.global/zhoux379/barn/data/fastq', help = 'seq dir')
     ps.add_argument('--keep', action='store_true', help='keep previous results?')
     ps.add_argument('--save_fastq', action='store_true', help='save fastq files?')
     ps.add_argument('--save_trimmed', action='store_true', help='save trimmed fastq files?')
-    ps.add_argument('--genome', default='Zmays_B73', help = 'reference genome')
     ps.add_argument('--aligner', default='auto', help='aligning software')
     ps.add_argument('--saveBAM', action='store_true', help='save bam files?')
     ps.add_argument('--preseq', action='store_true', help='run preseq?')
