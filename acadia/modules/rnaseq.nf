@@ -440,7 +440,7 @@ workflow rnaseq {
       ril_csv = ril3.out.csv; ril_txt = ril3.out.txt
     }
 
-    cage = Channel.empty();
+    bigwigs = Channel.empty();
     if (params.cage) {
       cage1(bams)
       bigwigs = cage1.out

@@ -154,7 +154,7 @@ if __name__ == "__main__":
     ps.add_argument('--interleaved', action='store_true', help='sequence source')
     ps.add_argument('--metadir', default=os.environ['ba'], help = 'meta table directory')
     ps.add_argument('--genome', default='Zmays_B73', help = 'reference genome')
-#    ps.add_argument('--seqdir', default='/scratch.global/zhoux379/barn/data/fastq', help = 'seq dir')
+#    ps.add_argument('--seqdir', default=os.environ['ba'], help = 'seq dir')
     ps.add_argument('--keep', action='store_true', help='keep previous results?')
     ps.add_argument('--save_fastq', action='store_true', help='save fastq files?')
     ps.add_argument('--save_trimmed', action='store_true', help='save trimmed fastq files?')
