@@ -10,10 +10,13 @@ from jcvi.apps.base import sh, mkdir
 from jcvi.formats.base import must_open
 
 def init(args):
-    assert op.isfile(fs), "samplelist not found: %s" % fs
-    cvts = dict(SampleID=str,Tissue=str,Genotype=str)
-    sl = pd.read_csv(fs, sep="\t", header=0, converters=cvts)
-    return sl
+    for env in args.envs.split(","):
+        fe = "%s/%s.yml" % (args.envdir, env)
+        assert op.isfile(fe), "env file found: %s" % fe
+        cmd = "conda env create -n %s -f %s" % (env, fe)
+        sh(cmd)
+        cmd = "conda update -n %s --all" % (env)
+        sh(cmd)
 
 if __name__ == "__main__":
     import argparse
@@ -26,7 +29,9 @@ if __name__ == "__main__":
     sp1 = sp.add_parser("init",
             formatter_class = argparse.ArgumentDefaultsHelpFormatter,
             help = "initialize conda environments using *.yml configurations")
-    sp1.add_argument('--envdir', default='~/git/nf/configs/environments', help = 'config folder')
+    sp1.add_argument('envs', default="genome", help = 'comma separated list of environment names')
+    sp1.add_argument('--envdir', default="%s/configs/environments" % os.environ["nf"], help = 'config folder')
+    sp1.add_argument('--update', action="store_true", help = 'auto-update?')
     sp1.set_defaults(func = init)
 
     args = ps.parse_args()

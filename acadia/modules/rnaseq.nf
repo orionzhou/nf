@@ -6,6 +6,7 @@ process version {
   path "software_versions.csv", emit: csv
 
   script:
+  //salmon --version &> v_salmon.txt
   """
   echo $workflow.manifest.version &> v_ngi_rnaseq.txt
   echo $workflow.nextflow.version &> v_nextflow.txt
@@ -20,7 +21,6 @@ process version {
   read_duplication.py --version &> v_rseqc.txt
   bamCoverage --version &> v_deeptools.txt || true
   featureCounts -v &> v_featurecounts.txt
-  salmon --version &> v_salmon.txt
   picard MarkDuplicates --version &> v_markduplicates.txt  || true
   samtools --version &> v_samtools.txt
   multiqc --version &> v_multiqc.txt

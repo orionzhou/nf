@@ -173,7 +173,7 @@ process mqc {
 process upd {
   label 'low_memory'
   tag "${params.name}"
-  conda "$NXF_CONDA_CACHEDIR/r"
+  //conda "$NXF_CONDA_CACHEDIR/r"
   publishDir "${params.outdir}", mode:'copy', overwrite:'true'
   publishDir "${params.qcdir}/${params.genome}/${params.name}", mode:'copy', overwrite:'true'
 
@@ -198,12 +198,12 @@ def get_reads(design) {
       .splitCsv(header:true, sep:"\t")
       .filter { it.paired != 'TRUE' }
       .map {row -> [row.SampleID, row.paired.toBoolean(),
-        file(row.r0), file('f1'), file('f2'), has_ext(row.r0, ".gz"), null]}
+        file(row.r0), file('f1', checkIfExists:false), file('f2', checkIfExists:false), has_ext(row.r0, ".gz"), null]}
     reads_pe = design
       .splitCsv(header:true, sep:"\t")
       .filter { it.paired == 'TRUE' }
       .map {row -> [row.SampleID, row.paired.toBoolean(),
-        file('f0'), file(row.r1), file(row.r2), null, has_ext(row.r1, ".gz")]}
+        file('f0', checkIfExists:false), file(row.r1), file(row.r2), null, has_ext(row.r1, ".gz")]}
     reads = reads_se.concat(reads_pe)
   } else if (params.source == 'sra') {
     if (params.lib in ['chipseq','dapseq']) {
