@@ -15,15 +15,18 @@ def locate(args):
     seqs = Fasta(fd)
 
     fho = open(fo, 'w')
-    fho.write('kmer\tsid\tsrd\tstart\n')
+    #fho.write('kmer\tsid\tsrd\tstart\n')
+    i = 1
     for seqid in seqs.keys():
         seq = seqs[seqid][0:].seq
         kseq = kmer
         kseq2 = Sequence(name='kmer',seq=kseq).reverse.complement.seq
         for m in re.finditer(kseq, seq):
-            fho.write("%s\t%s\t+\t%d\n" % (kseq, seqid, m.start()))
+            fho.write("%s\t%d\t%s\t+\t%d\t%d\n" % (kseq, i, seqid, m.start()+1, m.start()+len(kmer)))
+            i += 1
         for m in re.finditer(kseq2, seq):
-            fho.write("%s\t%s\t-\t%d\n" % (kseq, seqid, m.start()))
+            fho.write("%s\t%d\t%s\t-\t%d\t%d\n" % (kseq, i, seqid, m.start()+1, m.start()+len(kmer)))
+            i += 1
     fho.close()
 
 if __name__ == "__main__":

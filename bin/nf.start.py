@@ -48,47 +48,60 @@ def check_fastq_0(args, yid):
         if list(fcdic.keys())[0] == 'single': single_end = True
     return single_end
 
-def check_fastq(design):
+def check_fastq(design, paired, source):
     sl = read_samplelist(design)
-    cdic = dict(single=0, pair=0)
+    cdic = dict(SE=0, PE=0)
+    if source == 'mixed': assert 'source' in sl
+    if paired == 'mixed': assert 'paired' in sl
     for i in range(len(sl)):
-        sid, paired = sl['SampleID'][i], sl['paired'][i]
-        if paired:
-            cdic["pair"] += 1
+        sid, r0, r1, r2 = sl['SampleID'][i], sl['r0'][i], sl['r1'][i], sl['r2'][i]
+        source1 = source
+        if 'source' in sl:
+            if source == 'mixed':
+                source1 = sl['source'][i]
+            else:
+                assert sl['source'][i] == source
+        paired1 = paired
+        if 'paired' in sl:
+            if paired == 'mixed':
+                paired1 = sl['paired'][i]
+            else:
+                assert sl['paired'][i] == paired
+        if paired1 == 'SE':
+            if source1 == 'local':
+                assert op.isfile(r0)
+            elif source1 == 'sra':
+                assert r0.startswith("SRR")
+            elif source1 == 's3':
+                assert r0.startswith("s3://")
         else:
-            cdic["single"] += 1
-    fcdic = { k: v for k, v in cdic.items() if v > 0}
-    single_end = False
-    if len(fcdic) > 1:
-        print("warning: mixed library: %d single + %d paired" % (fcdir['single'], fcdir['pair']))
-    else:
-        if list(fcdic.keys())[0] == 'single': single_end = True
-    return single_end
+            if source1 == 'local':
+                assert op.isfile(r1)
+                assert op.isfile(r2)
+            elif source1 == 'sra':
+                assert r0.startswith("SRR")
+            elif source1 == 's3':
+                assert r1.startswith("s3://")
+                assert r2.startswith("s3://")
 
 def nf_start(args):
     yid = args.yid
     barn, genome = args.metadir, args.genome
-    metadir_x = op.join(barn, genome, '08_sra_list_excel')
-    metadir = op.join(barn, genome, '09_sra_list')
-    if args.source == "local":
-        metadir_x = op.join(barn, genome, '06_local_list_excel')
-        metadir = op.join(barn, genome, '07_local_list')
-    xls = "%s/%s.xlsx" % (metadir_x, yid)
-    design = "%s/%s.tsv" % (metadir, yid)
-    sh("excel.py tsv %s %s" % (xls, design))
-    single_end = check_fastq(design)
+    metadir = op.join(barn, genome, '05_excel')
+    xls = "%s/%s.xlsx" % (metadir, yid)
+    assert op.isfile(xls)
 
+    design = "%s.tsv" % (yid)
     ft = "%s/%s.config" % (args.cfgdir, args.lib)
     fht = must_open(ft, 'r')
     tmp = Template(fht.read())
-    srd = str(args.strand).lower()
-    if srd != 'false': srd = "'%s'" % srd
 
     aligner_map = dict(rnaseq='hisat2',chipseq='bwa',methylseq='bismark_hisat2')
     aligner = aligner_map[args.lib] if args.aligner == 'auto' else args.aligner
     msg = tmp.render(yid = yid,
                      design = design,
                      source = args.source,
+                     paired = args.paired,
                      interleaved = str(args.interleaved).lower(),
                      save_fastq = str(args.save_fastq).lower(),
                      save_trimmed = str(args.save_trimmed).lower(),
@@ -97,14 +110,13 @@ def nf_start(args):
                      genome = args.genome,
                      skip_preseq = str(not args.preseq).lower(),
 
-                     strand = srd,
+                     strandness = args.strandness,
                      ase = str(args.ase).lower(),
                      ril = str(args.ril).lower(),
                      cage = str(args.cage).lower(),
                      salmon = str(args.salmon).lower(),
                      stringtie = str(args.stringtie).lower(),
 
-                     single_end = str(single_end).lower(),
                      narrow_peak = str(args.narrow_peak).lower()
     )
 
@@ -115,6 +127,9 @@ def nf_start(args):
     mkdir(workdir, overwrite=True)
     mkdir(rawdir, overwrite=True)
     os.chdir(rundir)
+
+    sh("excel.py tsv %s %s" % (xls, design))
+    check_fastq(design, args.paired, args.source)
 
     fc = "nextflow.config"
     fhc = must_open(fc, 'w')
@@ -144,17 +159,18 @@ if __name__ == "__main__":
     )
 
     libs = ['rnaseq','smrnaseq','chipseq','dapseq','atacseq','methylseq','dnaseq']
+    allowed_sources = ['sra','local','s3','mixed']
     ps.add_argument('lib', choices = libs, help = 'library type')
     ps.add_argument('yid', help = 'study/project id')
     ps.add_argument('--projdir', default=os.environ['proj'], help = 'project dir')
     ps.add_argument('--cfgdir', default="%s/configs/templates" % os.environ['nf'], help = 'nextflow template config dir')
     ps.add_argument('--workdir', default=os.environ['NXF_WORK'], help = 'nextflow work dir')
     ps.add_argument('--rawdir', default="%s/raw" % os.environ['NXF_CACHE'], help = 'nextflow raw output dir')
-    ps.add_argument('--source', default='sra', choices=['local','sra','sra2'], help='sequence source')
-    ps.add_argument('--interleaved', action='store_true', help='sequence source')
+    ps.add_argument('--source', default='sra', choices=allowed_sources, help='sequence source')
+    ps.add_argument('--paired', default='SE', choices=['SE','PE','mixed'], help='single end, paired end or mixed')
+    ps.add_argument('--interleaved', action='store_true', help='interleaved format?')
     ps.add_argument('--metadir', default=os.environ['ba'], help = 'meta table directory')
     ps.add_argument('--genome', default='Zmays_B73', help = 'reference genome')
-#    ps.add_argument('--seqdir', default=os.environ['ba'], help = 'seq dir')
     ps.add_argument('--keep', action='store_true', help='keep previous results?')
     ps.add_argument('--save_fastq', action='store_true', help='save fastq files?')
     ps.add_argument('--save_trimmed', action='store_true', help='save trimmed fastq files?')
@@ -163,7 +179,7 @@ if __name__ == "__main__":
     ps.add_argument('--preseq', action='store_true', help='run preseq?')
 
     g1 = ps.add_argument_group('rnaseq', 'rna-seq specific arguments')
-    g1.add_argument('--strand', default='false', help = 'read strandedness')
+    g1.add_argument('--strandness', default='no', choices=['no','forward','reverse'], help = 'read strandedness')
     g1.add_argument('--ase', action='store_true', help='allele specific expression?')
     g1.add_argument('--ril', action='store_true', help='genotype (ril) samples?')
     g1.add_argument('--cage', action='store_true', help='run CAGE pipeline?')
@@ -171,7 +187,6 @@ if __name__ == "__main__":
     g1.add_argument('--stringtie', action='store_true', help='run stringtie?')
 
     g2 = ps.add_argument_group('chipseq', 'chip-seq specific arguments')
-    #g2.add_argument('--pair', default='auto', choices=['auto','single','paired'], help = 'force specify paired end option')
     g2.add_argument('--narrow_peak', action='store_true', help = 'turn off broad peak calling mode in MACS2')
 
     args = ps.parse_args()

@@ -191,7 +191,7 @@ process i_bwa {
   tuple val(id), path(ref), path(fai), val(tag)
 
   output:
-  tuple val(id), pre, path("bwa/*")
+  tuple val(id), val(pre), path("bwa/*")
 
   script:
   pre = "bwa/db"
@@ -213,7 +213,7 @@ process i_bismark {
   tuple val(id), path(ref), path(fai), val(tag)
 
   output:
-  tuple val(id), pre, path("bismark/*")
+  tuple val(id), val(pre), path("bismark/*")
 
   script:
   pre = "bismark"
@@ -342,7 +342,7 @@ process i_star {
   tuple val(id), path(ref), path(fai), path(gtf), val(tag)
 
   output:
-  tuple val(id), pre, path("star/*")
+  tuple val(id), val(pre), path("star/*")
 
   script:
   pre = "star"
@@ -411,7 +411,7 @@ process i_tandup {
   when: tag == 'T'
 
   input:
-  tuple val(id), path(fna), path(faa), path(gbed), val(blastn_pre), path("blastn/*"), val(blastp_pre), path("blastp/*"), tag
+  tuple val(id), path(fna), path(faa), path(gbed), val(blastn_pre), path("blastn/*"), val(blastp_pre), path("blastp/*"), val(tag)
 
   output:
   tuple val(id), path("05.tandup.cds.tsv"), path("05.tandup.pro.tsv")
@@ -438,7 +438,7 @@ process i_rcfg {
   when: tag == 'T'
 
   input:
-  tuple val(id), path(chrom_size), path(chrom_bed), path(gap_bed), path(ptsv), path(pdes), tag
+  tuple val(id), path(chrom_size), path(chrom_bed), path(gap_bed), path(ptsv), path(pdes), val(tag)
 
   output:
   tuple val(id), path("55.rds")

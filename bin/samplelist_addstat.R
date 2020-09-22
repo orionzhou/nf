@@ -5,6 +5,7 @@ parser <- ArgumentParser(description = 'Add fastq stats to sample list')
 parser$add_argument("samplelist", nargs=1, help="sample list table (*.tsv)")
 parser$add_argument("fastqc", nargs=1, help="fastqc report table (*.txt)")
 parser$add_argument("out", nargs=1, help="output sample list (*.tsv)")
+parser$add_argument("--paired", default='SE', help="single-end or paired-end")
 args <- parser$parse_args()
 
 f_sam = args$samplelist
@@ -19,7 +20,7 @@ if( file.access(f_fqc) == -1 )
 require(tidyverse)
 get_fastqc <- function(sid, paired, tq) {
     #{{{
-    if(paired) {
+    if(paired == 'PE') {
         ptn = sprintf("^%s_R[12]", sid)
         tq1 = tq %>% filter(str_detect(sid, ptn))
         stopifnot(nrow(tq1) == 2)
@@ -40,16 +41,18 @@ get_fastqc <- function(sid, paired, tq) {
 }
 
 ti = read_tsv(f_sam)
+if(! "paired" %in% colnames(ti))
+    ti = ti %>% mutate(paired = args$paired)
 tq = read_tsv(f_fqc) %>% select(sid=1, nread=5, avgLength=10)
 
-cols_to_rm = c('interleaved','r0','r1','r2','spots','avgLength')
+cols_to_rm = c('source', 'interleaved','r0','r1','r2','spots','avgLength')
 for(col_to_rm in cols_to_rm) {
     if(col_to_rm %in% colnames(ti)) ti = ti %>% select(-!!col_to_rm)
 }
 
 to = ti %>%
     mutate(data = map2(SampleID, paired, get_fastqc, tq=tq)) %>%
-    unnest()
+    unnest(data)
 
 write_tsv(to, f_out, na='')
 

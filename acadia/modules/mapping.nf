@@ -22,9 +22,9 @@ process hs2 {
   rg = "--rg-id ${id} --rg ${seq_center.replaceAll('\\s','_')} SM:${id}"
   opt_splice = params.lib == 'chipseq' ? '--no-spliced-alignment' : ''
   def strandness = ''
-  if (params.lib == 'rnaseq' && params.stranded == 'forward') {
+  if (params.lib == 'rnaseq' && params.strandness == 'forward') {
     strandness = !paired ? '--rna-strandness F' : '--rna-strandness FR'
-  } else if (params.lib == 'rnaseq' && params.stranded == 'reverse') {
+  } else if (params.lib == 'rnaseq' && params.strandness == 'reverse') {
     strandness = !paired ? '--rna-strandness R' : '--rna-strandness RF'
   }
   input = paired ? "-1 ${reads[0]} -2 ${reads[1]}" : "-U ${reads}"

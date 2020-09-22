@@ -1,4 +1,25 @@
 include {has_ext} from '../modules/utils.nf'
+process fqu {
+  label 'low_memory'
+  tag "$id"
+
+  input:
+  tuple val(id), val(source), val(paired), val(r0), val(r1), val(r2)
+
+  output:
+  tuple val(id), val(paired), path("${id}_R?.fq.gz")
+
+  script:
+  mem = task.memory
+  opt = params.interleaved ? "--interleaved" : ""
+  reads = (paired == 'SE' || source == 'sra') ? "--r0 $r0" : "--r1 $r1 --r2 $r2"
+  """
+  nf.fastq.py $id --source $source --paired $paired $opt \
+    --cpu ${task.cpus} --mem ${task.memory.toGiga()} --tmp ${NXF_TEMP} \
+    $reads
+  """
+}
+
 process fqd {
   label 'low_memory'
   tag "$id"
@@ -94,6 +115,28 @@ process fqv {
     """
 }
 
+process fqs {
+  label 'low_memory'
+  tag "$id"
+
+  input:
+  tuple val(id), val(paired), val(r0), val(r1), val(r2)
+
+  output:
+  tuple val(id), val(paired), path("${id}_R?.fq.gz", includeInputs: true)
+
+  script:
+  if( paired )
+    """
+    s3cmd get $r1 ${id}_R1.fq.gz
+    s3cmd get $r2 ${id}_R2.fq.gz
+    """
+  else
+    """
+    s3cmd get $r0 ${id}_R0.fq.gz
+    """
+}
+
 
 process fqc {
   label 'low_memory'
@@ -180,6 +223,7 @@ process upd {
   input:
   path(design)
   path(mqc)
+  val(paired)
 
   output:
   path("00.meta.tsv")
@@ -187,11 +231,23 @@ process upd {
   script:
   """
   mv $design in.tsv
-  samplelist_addstat.R in.tsv $mqc 00.meta.tsv
+  samplelist_addstat.R in.tsv $mqc --paired $paired 00.meta.tsv
   """
 }
 
 def get_reads(design) {
+  reads = design
+    .splitCsv(header:true, sep:"\t")
+    .map { row -> [ row.SampleID,
+            (params.source=='mixed') ? row.source : params.source,
+            (params.paired=='mixed') ? row.paired : params.paired,
+            row.r0, row.r1, row.r2
+            ]
+    }
+  return reads
+}
+
+def get_reads2(design) {
   reads = Channel.empty()
   if( params.source == 'local' ) {
     reads_se = design
@@ -205,6 +261,11 @@ def get_reads(design) {
       .map {row -> [row.SampleID, row.paired.toBoolean(),
         file('f0', checkIfExists:false), file(row.r1), file(row.r2), null, has_ext(row.r1, ".gz")]}
     reads = reads_se.concat(reads_pe)
+  } else if( params.source == 's3' ) {
+    reads = design
+      .splitCsv(header:true, sep:"\t")
+      .filter { it.paired != 'TRUE' }
+      .map {row -> [row.SampleID, row.paired.toBoolean(), row.r0, row.r1, row.r2]}
   } else if (params.source == 'sra') {
     if (params.lib in ['chipseq','dapseq']) {
       reads = design
@@ -221,58 +282,15 @@ def get_reads(design) {
   return reads
 }
 
-def get_reads_o1(design) {
-  reads_se = design
-    .splitCsv(header:true, sep:"\t")
-    .filter { it.paired != 'TRUE' }
-    .map { row -> [ row.SampleID, false, [
-      file("${params.seqdir}/${params.name}/${row.SampleID}.fq.gz", checkIfExists:true)
-      ] ] }
-  reads_pe = design
-    .splitCsv(header:true, sep:"\t")
-    .filter { it.paired == 'TRUE' }
-    .map { row -> [ row.SampleID, true, [
-      file("${params.seqdir}/${params.name}/${row.SampleID}_1.fq.gz", checkIfExists:true),
-      file("${params.seqdir}/${params.name}/${row.SampleID}_2.fq.gz", checkIfExists:true)
-      ] ] }
-  return reads_se.concat(reads_pe)
-}
-def get_reads_o2(design) {
-  reads_se = design
-    .splitCsv(header:true, sep:"\t")
-    .filter { it.paired != 'TRUE' }
-    .map { row -> [ row.SampleID, false, [
-      file("${params.seqdir}/${params.name}/${row.SampleID}.fq.gz", checkIfExists:true)
-      ] ] }
-  reads_pe = design
-    .splitCsv(header:true, sep:"\t")
-    .filter { it.paired == 'TRUE' }
-    .map { row -> [ row.SampleID, true, [
-      //file("${params.seqdir}/${params.name}/${row.SampleID}_{1,R1}.fq.gz", checkIfExists:true),
-      //file("${params.seqdir}/${params.name}/${row.SampleID}_{2,R2}.fq.gz", checkIfExists:true)
-      file("${params.seqdir}/${params.name}/${row.SampleID}_1.fq.gz", checkIfExists:true),
-      file("${params.seqdir}/${params.name}/${row.SampleID}_2.fq.gz", checkIfExists:true)
-      ] ] }
-  return reads_se.concat(reads_pe)
-}
-
 workflow fq {
   take: design
   main:
     raw_read_list = get_reads(design)
-    raw_reads = Channel.empty()
-    if( params.source == 'local' ) {
-      raw_read_list | fqz | fqv
-      raw_reads = fqv.out
-    } else {
-      raw_read_list | fqd
-      raw_reads = fqd.out
-    }
-    raw_reads | (fqc & trim)
+    raw_read_list | fqu | (fqc & trim)
     mqc(fqc.out.zip.collect())
-    upd(design, mqc.out)
+    upd(design, mqc.out, params.paired)
   emit:
-    raw_reads = raw_reads
+    raw_reads = fqu.out
     trim_reads = trim.out.reads
     trim_log = trim.out.log
     raw_fqc = fqc.out.zip

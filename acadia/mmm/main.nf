@@ -16,8 +16,8 @@ prep_params(params, workflow)
     .ifEmpty { exit 1, "no motif file found: ${params.mtf}" }
   mtfs = Channel.fromPath(params.mtf_lst, checkIfExists: true)
     .ifEmpty { exit 1, "no motif list found: ${params.mtf}" }
-    .splitCsv(header:false)
-    .map { row -> [ row[0] ] }
+    .splitCsv(header:true)
+    .map { row -> [ row.fid ] }
   lsts = Channel.fromPath(params.lst, checkIfExists: true)
     .ifEmpty { exit 1, "no seq list found: ${params.lst}" }
     .splitCsv(header:true, sep:"\t")
