@@ -22,7 +22,7 @@ process bamsort {
 process markdup {
   label 'mid_memory'
   tag "$id"
-  publishDir "${params.outdir}/20_bam", mode:'link', overwrite:'true',
+  publishDir "${params.outdir}/20_bam", mode:'copy', overwrite:'true',
     saveAs: { fn ->
       if (fn.indexOf(".txt") > 0) "markdup_metrics/$fn"
       else params.saveBAM ? fn : null
@@ -53,7 +53,7 @@ process markdup {
 process bamstat {
   label 'process_low'
   tag "$id"
-  publishDir "${params.outdir}/20_bam/stats", mode:'link', overwrite:'true'
+  publishDir "${params.outdir}/20_bam/stats", mode:'copy', overwrite:'true'
 
   input:
   tuple val(id), path(bam), path(bai)
@@ -66,14 +66,14 @@ process bamstat {
   //samtools idxstats ${id}.bam > ${id}.idxstats.txt
   //samtools stats ${id}.bam > ${id}.samstats.txt
   """
-  bam.py stat $bam > ${id}.stat.tsv
+  $baseDir/bin/bam.py stat $bam > ${id}.stat.tsv
   """
 }
 
 process pseq {
   label 'mid_memory'
   tag "$id"
-  publishDir "${params.outdir}/23_preseq", mode:'link', overwrite:'true'
+  publishDir "${params.outdir}/23_preseq", mode:'copy', overwrite:'true'
 
   input:
   tuple val(id), path(bam), path(bai), val(spots)

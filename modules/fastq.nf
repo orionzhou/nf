@@ -23,7 +23,7 @@ process fqu {
 process fqd {
   label 'low_memory'
   tag "$id"
-  publishDir "${params.outdir}/00_fastq", mode:'link', overwrite: true,
+  publishDir "${params.outdir}/00_fastq", mode:'copy', overwrite: true,
     saveAs: { fn -> params.save_fastq ? "$fn" : null }
 
   input:
@@ -88,7 +88,7 @@ process fqz {
 process fqv {
   label 'low_memory'
   tag "$id"
-  publishDir "${params.outdir}/00_fastq", mode:'link', overwrite: true,
+  publishDir "${params.outdir}/00_fastq", mode:'copy', overwrite: true,
     saveAs: { fn -> params.save_fastq ? "$fn" : null }
 
   input:
@@ -141,7 +141,7 @@ process fqs {
 process fqc {
   label 'low_memory'
   tag "$id"
-  publishDir "${params.outdir}/01_fastqc", mode:'link', overwrite:'true',
+  publishDir "${params.outdir}/01_fastqc", mode:'copy', overwrite:'true',
     saveAs: { fn ->
       fn.endsWith(".zip") ? "zips/$fn" : "$fn"
     }
@@ -165,7 +165,7 @@ process fqc {
 process trim {
   label 'low_memory'
   tag "$id"
-  publishDir "${params.outdir}/02_trim_galore", mode:'link', overwrite:'true',
+  publishDir "${params.outdir}/02_trim_galore", mode:'copy', overwrite:'true',
     saveAs: { fn ->
       if (fn.endsWith(".html")) "fastqc/$fn"
       else if (fn.endsWith(".zip")) "fastqc/zips/$fn"

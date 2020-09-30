@@ -110,7 +110,7 @@ def nf_start(args):
                      genome = args.genome,
                      skip_preseq = str(not args.preseq).lower(),
 
-                     strandness = args.strandness,
+                     stranded = args.stranded,
                      ase = str(args.ase).lower(),
                      ril = str(args.ril).lower(),
                      cage = str(args.cage).lower(),
@@ -179,7 +179,7 @@ if __name__ == "__main__":
     ps.add_argument('--preseq', action='store_true', help='run preseq?')
 
     g1 = ps.add_argument_group('rnaseq', 'rna-seq specific arguments')
-    g1.add_argument('--strandness', default='no', choices=['no','forward','reverse'], help = 'read strandedness')
+    g1.add_argument('--stranded', default='no', choices=['no','forward','reverse'], help = 'read strandedness')
     g1.add_argument('--ase', action='store_true', help='allele specific expression?')
     g1.add_argument('--ril', action='store_true', help='genotype (ril) samples?')
     g1.add_argument('--cage', action='store_true', help='run CAGE pipeline?')

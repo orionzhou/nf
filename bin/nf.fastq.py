@@ -30,13 +30,13 @@ def main(args):
                 sh2("cat $r0 | deinterleave_fastq.sh %s_R1.fq.gz %s_R2.fq.gz %d compress" % (args.r0, sid, sid, args.cpu))
         else:
             if (args.paired == 'PE' and args.r1.endswith(".gz")):
-                sh2("ln -f %s %s_R1.fq.gz" % (args.r1, sid))
-                sh2("ln -f %s %s_R2.fq.gz" % (args.r2, sid))
+                sh2("cp %s %s_R1.fq.gz" % (args.r1, sid))
+                sh2("cp %s %s_R2.fq.gz" % (args.r2, sid))
             elif (args.paired == 'PE' and not args.r1.endswith(".gz")):
                 sh2("pigz -p %d -c %s > %s_R1.fq.gz" % (args.cpu, args.r1, sid))
                 sh2("pigz -p %d -c %s > %s_R2.fq.gz" % (args.cpu, args.r2, sid))
             elif (args.paired == 'SE' and args.r0.endswith(".gz")):
-                sh2("ln -f %s %s_R0.fq.gz" % (args.r0, sid))
+                sh2("cp %s %s_R0.fq.gz" % (args.r0, sid))
             else:
                 sh2("pigz -p %d -c %s > %s_R0.fq.gz" % (args.cpu, args.r0, sid))
     elif (args.source == 's3'):

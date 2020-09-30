@@ -16,7 +16,9 @@ def help() {
                                   Available: conda, docker, singularity, awsbatch, test and more.
 
   Generic:
-    --stranded                    [false, 'forward', 'rerverse']
+    --source                      ['sra', 'local', 's3', 'mixed']
+    --paired                      ['SE', 'PE', 'mixed']
+    --stranded                    ['no', 'forward', 'rerverse']
 
   References:                     If not specified in the configuration file or you wish to overwrite any of the references.
     --genome                      Name of iGenomes reference
@@ -127,9 +129,10 @@ def summary() {
   summary['Run Name'] = params.name ?: workflow.runName
   summary['Design'] = params.design
   summary['Source'] = params.source
-  summary['Strandedness'] = params.stranded
+  summary['Paired'] = params.paired
+  summary['Stranded'] = params.stranded
   summary['Genome'] = params.genome
-  summary['Remove rRNA'] = params.removeRiboRNA
+  //summary['Remove rRNA'] = params.removeRiboRNA
   if (params.pico) summary['Library Prep'] = "SMARTer Stranded Total RNA-Seq Kit - Pico Input"
   if (params.save_fastq) summary['Save raw fastq'] = params.save_fastq ? 'T':'F'
   if (params.save_trimmed) summary['Save trimmed fastq'] = params.save_trimmed ? 'T':'F'

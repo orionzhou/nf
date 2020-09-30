@@ -1,5 +1,5 @@
 process version {
-  publishDir "${params.outdir}/pipeline_info", mode:'link', overwrite:'true'
+  publishDir "${params.outdir}/pipeline_info", mode:'copy', overwrite:'true'
 
   output:
   path 'software_versions_mqc.yaml', emit: yml
@@ -32,7 +32,7 @@ process version {
 }
 
 process outdoc {
-  publishDir "${params.outdir}/pipeline_info", mode:'link', overwrite:'true'
+  publishDir "${params.outdir}/pipeline_info", mode:'copy', overwrite:'true'
 
   input:
   path output_docs
@@ -49,7 +49,7 @@ process outdoc {
 process rseqc {
   label 'mid_memory'
   tag "$id"
-  publishDir "${params.outdir}/26_rseqc", mode:'link', overwrite:'true',
+  publishDir "${params.outdir}/26_rseqc", mode:'copy', overwrite:'true',
     saveAs: { fn ->
            if (fn.indexOf("bam_stat.txt") > 0)                      "bam_stat/$fn"
       else if (fn.indexOf("infer_experiment.txt") > 0)              "infer_experiment/$fn"
@@ -99,7 +99,7 @@ process rseqc {
 process qmap {
   label 'low_memory'
   tag "$id"
-  publishDir "${params.outdir}/26_qualimap", mode:'link', overwrite:'true'
+  publishDir "${params.outdir}/26_qualimap", mode:'copy', overwrite:'true'
 
   when:
   !params.skip_qc && !params.skip_qualimap
@@ -124,7 +124,7 @@ process qmap {
 process duprad {
   label 'low_memory'
   tag "$id"
-  publishDir "${params.outdir}/26_dupradar", mode:'link', overwrite:'true',
+  publishDir "${params.outdir}/26_dupradar", mode:'copy', overwrite:'true',
     saveAs: { fn ->
       if (fn.indexOf("_duprateExpDens.pdf") > 0) "scatter_plots/$fn"
       else if (fn.indexOf("_duprateExpBoxplot.pdf") > 0) "box_plots/$fn"
@@ -155,7 +155,7 @@ process duprad {
 process fcnt {
   label 'low_memory'
   tag "$id"
-  publishDir "${params.outdir}/31_featureCounts", mode:'link', overwrite:'true',
+  publishDir "${params.outdir}/31_featureCounts", mode:'copy', overwrite:'true',
     saveAs: {fn ->
       if (fn.indexOf("biotype_counts") > 0) "biotype_counts/$fn"
       else if (fn.indexOf("_gene.featureCounts.txt.summary") > 0) "gene_count_summaries/$fn"
@@ -198,7 +198,7 @@ process fcnt {
 process corr {
   label 'low_memory'
   tag "${params.name}"
-  publishDir "${params.outdir}/33_sample_correlation", mode:'link', overwrite:'true'
+  publishDir "${params.outdir}/33_sample_correlation", mode:'copy', overwrite:'true'
 
   when:
   !params.skip_qc && !params.skip_edger
@@ -228,7 +228,7 @@ process corr {
 process stie {
   label "mid_memory"
   tag "$name"
-  publishDir "${params.outdir}/32_stringtieFPKM", mode:'link', overwrite:'true',
+  publishDir "${params.outdir}/32_stringtieFPKM", mode:'copy', overwrite:'true',
     saveAs: { fn ->
       if (fn.indexOf("transcripts.gtf") > 0) "transcripts/$fn"
       else if (fn.indexOf("cov_refs.gtf") > 0) "cov_refs/$fn"
@@ -265,7 +265,7 @@ process stie {
 process salm {
   label 'mid_memory'
   tag "$name"
-  publishDir "${params.outdir}/34_salmon", mode:'link', overwrite:'true'
+  publishDir "${params.outdir}/34_salmon", mode:'copy', overwrite:'true'
 
   when:
   params.run_salmon
@@ -498,7 +498,7 @@ process mg {
   label "mid_memory"
   tag "${params.name}"
   conda "$NXF_CONDA_CACHEDIR/r"
-  publishDir "${params.outdir}/50_final", mode:'link', overwrite:'true'
+  publishDir "${params.outdir}/50_final", mode:'copy', overwrite:'true'
   publishDir "${params.qcdir}/${params.genome}/${params.name}", mode:'copy', overwrite:'true'
 
   input:
@@ -559,7 +559,7 @@ process renorm {
   label 'process_medium'
   tag "${params.name}"
   conda "$NXF_CONDA_CACHEDIR/r"
-  publishDir "${params.outdir}/50_final", mode:'link', overwrite:'true'
+  publishDir "${params.outdir}/50_final", mode:'copy', overwrite:'true'
   publishDir "${params.qcdir}/${params.genome}/${params.name}", mode:'copy', overwrite:'true'
   publishDir "${params.s3dir}/${params.genome.toLowerCase().replaceAll(/_/, "-")}", mode:'copy', overwrite:'true',
     saveAs: { fn ->
@@ -587,7 +587,7 @@ process renorm {
 process mqc {
   label 'low_memory'
   tag "${params.name}"
-  publishDir "${params.outdir}/40_multiqc", mode:'link', overwrite:'true'
+  publishDir "${params.outdir}/40_multiqc", mode:'copy', overwrite:'true'
   publishDir "${params.s3dir}/${params.genome.toLowerCase().replaceAll(/_/, "-")}", mode:'copy', overwrite:'true',
     saveAs: { fn ->
       if (fn.indexOf(".html") > 0) "$fn"

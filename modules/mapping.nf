@@ -1,7 +1,7 @@
 process hs2 {
   label 'high_memory'
   tag "$id"
-  publishDir "${params.outdir}/11_hisat2", mode:'link', overwrite:'true',
+  publishDir "${params.outdir}/11_hisat2", mode:'copy', overwrite:'true',
     saveAs: { fn ->
       if (fn.indexOf(".hisat2_summary.txt") > 0) "logs/$fn"
       else if (!params.saveBAM && fn == 'where_are_my_files.txt') fn
@@ -22,9 +22,9 @@ process hs2 {
   rg = "--rg-id ${id} --rg ${seq_center.replaceAll('\\s','_')} SM:${id}"
   opt_splice = params.lib == 'chipseq' ? '--no-spliced-alignment' : ''
   def strandness = ''
-  if (params.lib == 'rnaseq' && params.strandness == 'forward') {
+  if (params.lib == 'rnaseq' && params.stranded == 'forward') {
     strandness = paired == 'SE' ? '--rna-strandness F' : '--rna-strandness FR'
-  } else if (params.lib == 'rnaseq' && params.strandness == 'reverse') {
+  } else if (params.lib == 'rnaseq' && params.stranded == 'reverse') {
     strandness = paired == 'SE' ? '--rna-strandness R' : '--rna-strandness RF'
   }
   input = paired == 'PE' ? "-1 ${reads[0]} -2 ${reads[1]}" : "-U ${reads}"
@@ -45,7 +45,7 @@ process hs2 {
 process star {
   label 'high_memory'
   tag "$id"
-  publishDir "${params.outdir}/11_star", mode:'link', overwrite:'true',
+  publishDir "${params.outdir}/11_star", mode:'copy', overwrite:'true',
     saveAs: { fn ->
       if (fn.indexOf(".bam") == -1) "logs/$fn"
       else if (params.save_unmapped && fn != "where_are_my_files.txt" && 'Unmapped' in fn) "unmapped/$fn"
@@ -105,7 +105,7 @@ process star {
 process bwa {
   label 'high_memory'
   tag "$id"
-  publishDir "${params.outdir}/11_bwa", mode:'link', overwrite:'true',
+  publishDir "${params.outdir}/11_bwa", mode:'copy', overwrite:'true',
     saveAs: { fn ->
       if (fn.indexOf(".bam") == -1) "logs/$fn"
       else if (!params.saveBAM && fn == 'where_are_my_files.txt') fn
@@ -132,7 +132,7 @@ process bwa {
 process bwa_aln {
   label 'high_memory'
   tag "$id"
-  publishDir "${params.outdir}/11_bwa_aln", mode:'link', overwrite:'true',
+  publishDir "${params.outdir}/11_bwa_aln", mode:'copy', overwrite:'true',
     saveAs: { fn ->
       if (fn.indexOf(".bam") == -1) "logs/$fn"
       else if (!params.saveBAM && fn == 'where_are_my_files.txt') fn
@@ -167,7 +167,7 @@ process bwa_aln {
 process bsmk {
   label 'high_memory'
   tag "$id"
-  publishDir "${params.outdir}/11_bismark", mode:'link', overwrite:'true',
+  publishDir "${params.outdir}/11_bismark", mode:'copy', overwrite:'true',
     saveAs: { fn ->
       if (fn.indexOf(".bam") == -1) "logs/$fn"
       else if (!params.saveBAM && fn == 'where_are_my_files.txt') fn
