@@ -9,39 +9,42 @@ import logging
 from jcvi.apps.base import sh, mkdir
 from jcvi.formats.base import must_open
 
+def sh2(cmd):
+    sh(cmd, check=True)
+
 def main(args):
     sid = args.sid
     if (args.source == 'sra'):
         acc = args.r0
-        sh("fasterq-dump --split-files -e %d -m %dGB -O ./ -t %s %s" % (args.cpu, args.mem, args.tmp, acc))
+        sh2("fasterq-dump --split-files -e %d -m %dGB -O ./ -t %s %s" % (args.cpu, args.mem, args.tmp, acc))
         if (args.paired == 'PE'):
-            sh("pigz -p %d --fast -c %s_1.fastq > %s_R1.fq.gz" % (args.cpu, acc, sid))
-            sh("pigz -p %d --fast -c %s_2.fastq > %s_R2.fq.gz" % (args.cpu, acc, sid))
+            sh2("pigz -p %d --fast -c %s_1.fastq > %s_R1.fq.gz" % (args.cpu, acc, sid))
+            sh2("pigz -p %d --fast -c %s_2.fastq > %s_R2.fq.gz" % (args.cpu, acc, sid))
         else:
-            sh("pigz -p %d --fast -c %s.fastq > %s_R0.fq.gz" % (args.cpu, acc, sid))
+            sh2("pigz -p %d --fast -c %s.fastq > %s_R0.fq.gz" % (args.cpu, acc, sid))
     elif (args.source == 'local'):
         if (args.interleaved):
             if (args.r0.endswith(".gz")):
-                sh("zcat $r0 | deinterleave_fastq.sh %s_R1.fq.gz %s_R2.fq.gz %d compress" % (args.r0, sid, sid, args.cpu))
+                sh2("zcat $r0 | deinterleave_fastq.sh %s_R1.fq.gz %s_R2.fq.gz %d compress" % (args.r0, sid, sid, args.cpu))
             else:
-                sh("cat $r0 | deinterleave_fastq.sh %s_R1.fq.gz %s_R2.fq.gz %d compress" % (args.r0, sid, sid, args.cpu))
+                sh2("cat $r0 | deinterleave_fastq.sh %s_R1.fq.gz %s_R2.fq.gz %d compress" % (args.r0, sid, sid, args.cpu))
         else:
             if (args.paired == 'PE' and args.r1.endswith(".gz")):
-                sh("ln -f %s %s_R1.fq.gz" % (args.r1, sid))
-                sh("ln -f %s %s_R2.fq.gz" % (args.r2, sid))
+                sh2("ln -f %s %s_R1.fq.gz" % (args.r1, sid))
+                sh2("ln -f %s %s_R2.fq.gz" % (args.r2, sid))
             elif (args.paired == 'PE' and not args.r1.endswith(".gz")):
-                sh("pigz -p %d -c %s > %s_R1.fq.gz" % (args.cpu, args.r1, sid))
-                sh("pigz -p %d -c %s > %s_R2.fq.gz" % (args.cpu, args.r2, sid))
+                sh2("pigz -p %d -c %s > %s_R1.fq.gz" % (args.cpu, args.r1, sid))
+                sh2("pigz -p %d -c %s > %s_R2.fq.gz" % (args.cpu, args.r2, sid))
             elif (args.paired == 'SE' and args.r0.endswith(".gz")):
-                sh("ln -f %s %s_R0.fq.gz" % (args.r0, sid))
+                sh2("ln -f %s %s_R0.fq.gz" % (args.r0, sid))
             else:
-                sh("pigz -p %d -c %s > %s_R0.fq.gz" % (args.cpu, args.r0, sid))
+                sh2("pigz -p %d -c %s > %s_R0.fq.gz" % (args.cpu, args.r0, sid))
     elif (args.source == 's3'):
         if (args.paired == 'PE'):
-            sh("s3cmd get %s %s_R1.fq.gz" % (args.r1, sid))
-            sh("s3cmd get %s %s_R2.fq.gz" % (args.r2, sid))
+            sh2("s3cmd get %s %s_R1.fq.gz" % (args.r1, sid))
+            sh2("s3cmd get %s %s_R2.fq.gz" % (args.r2, sid))
         else:
-            sh("s3cmd get %s %s_R0.fq.gz" % (args.r0, sid))
+            sh2("s3cmd get %s %s_R0.fq.gz" % (args.r0, sid))
 
 if __name__ == "__main__":
     import argparse

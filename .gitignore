@@ -12,6 +12,7 @@ temp
 tmp
 multiqc
 out
+raw
 .nextflow*
 results
 
