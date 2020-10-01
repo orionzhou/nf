@@ -21,7 +21,10 @@ Clone the repo to local:
     conda env create -f nf/configs/environments/rnaseq.yml
     conda env list
 
-Run a test pipeline using existing genome database on MSI-mesabi queue
+A test pipeline is under `nf/demo/rnaseq`:
 
     cd nf/demo/rnaseq
+
+Make necessary changes to `reads.tsv` and `nextflow.config`, then we can run the test pipeline using existing genome database on MSI-mesabi queue:
+
     nextflow run ../../rnaseq -params-file /home/springer/zhoux379/projects/genome/nf/genomes.yml -profile mesabi
