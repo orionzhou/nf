@@ -111,8 +111,8 @@ process qmap {
   path "${id}"
 
   script:
-  def drc = params.stranded ? params.stranded=='reverse' ? 'strand-specific-reverse' : 'strand-specific-forward' : 'non-strand-specific'
-  def pair_str = paired ? '-pe' : ''
+  def drc = params.stranded=='no' ? 'non-strand-specific' : params.stranded=='reverse' ? 'strand-specific-reverse' : 'strand-specific-forward'
+  def pair_str = paired == 'PE' ? '-pe' : ''
   memory = task.memory.toGiga() + "G"
   """
   unset DISPLAY
@@ -145,8 +145,8 @@ process duprad {
   path "*.{pdf,txt}"
 
   script:
-  def drc = params.stranded ? params.stranded=='reverse' ? 2:1:0
-  def pair_str = paired ? 'paired':'single'
+  def drc = params.stranded == "no" ? 0 : params.stranded=='reverse' ? 2:1
+  def pair_str = paired == 'PE' ? 'paired':'single'
   """
   $baseDir/bin/rnaseq/dupRadar.r $bam $gtf $drc $pair_str ${task.cpus}
   """
@@ -173,7 +173,7 @@ process fcnt {
 
   script:
   def extra = params.fc_extra_attributes ? "--extraAttributes ${params.fc_extra_attributes}" : ''
-  def drc = params.stranded ? params.stranded=='reverse' ? 2 : 1 : 0
+  def drc = params.stranded == 'no' ? 0 : params.stranded=='reverse' ? 2 : 1
   biotype_qc = params.skip_biotype_qc ? '' : """
     featureCounts -a $gtf -g ${params.biotype} \\
     -o ${id}_biotype.featureCounts.txt -p \\
@@ -249,7 +249,7 @@ process stie {
   path "${name}_ballgown", emit: ballgown
 
   script:
-  def st_direction = params.stranded ? params.stranded=='reverse' ? "--rf" : "--fr" : ''
+  def st_direction = params.stranded == 'no' ? '' : params.stranded=='reverse' ? "--rf" : "--fr"
   def ignore_gtf = params.stringtie_ignore_gtf ? "" : "-e"
   """
   stringtie $bam $st_direction \\
@@ -280,13 +280,13 @@ process salm {
   path "${name}_salmon_transcript_tpm.csv", emit: ttpm
 
   script:
-  def rnastrandness = !paired ? 'U' : 'IU'
+  def rnastrandness = paired == 'SE' ? 'U' : 'IU'
   if (params.stranded == 'forward') {
-      rnastrandness = !paired ? 'SF' : 'ISF'
+      rnastrandness = paired == 'SE' ? 'SF' : 'ISF'
   } else if (params.stranded == 'reverse') {
-      rnastrandness = !paired ? 'SR' : 'ISR'
+      rnastrandness = paired == 'SE' ? 'SR' : 'ISR'
   }
-  def input = paired ? "-1 ${reads[0]} -2 ${reads[1]}" : "-r ${reads[0]}"
+  def input = paired=='SE' ? "-r ${reads[0]}" : "-1 ${reads[0]} -2 ${reads[1]}"
   unmapped = params.save_unmapped ? "--writeUnmappedNames" : ''
   """
   salmon quant --validateMappings \\
@@ -497,7 +497,7 @@ workflow rnaseq {
 process mg {
   label "mid_memory"
   tag "${params.name}"
-  conda "$NXF_CONDA_CACHEDIR/r"
+  //conda "$NXF_CONDA_CACHEDIR/r"
   publishDir "${params.outdir}/50_final", mode:'copy', overwrite:'true'
   publishDir "${params.qcdir}/${params.genome}/${params.name}", mode:'copy', overwrite:'true'
 

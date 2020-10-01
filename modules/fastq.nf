@@ -34,7 +34,7 @@ process fqd {
 
   script:
   def mem = task.memory
-  if( paired )
+  if( paired == 'PE' )
     """
     fasterq-dump --split-files -e ${task.cpus} -m ${task.memory.toGiga()}GB \
         -O ./ -t $TMPDIR ${acc}
@@ -60,19 +60,19 @@ process fqz {
   tuple val(id), val(paired), path("${id}_R0.fq.gz"), path("${id}_R1.fq.gz"), path("${id}_R2.fq.gz")
 
   script:
-  if( paired && gz1 )
+  if( paired =='PE' && gz1 )
     """
     ln -f $r1 ${id}_R1.fq.gz
     ln -f $r2 ${id}_R2.fq.gz
     touch ${id}_R0.fq.gz
     """
-  else if( paired && !gz1 )
+  else if( paired == 'PE' && !gz1 )
     """
     pigz -p ${task.cpus} -c $r1 > ${id}_R1.fq.gz
     pigz -p ${task.cpus} -c $r2 > ${id}_R2.fq.gz
     touch ${id}_R0.fq.gz
     """
-  else if( !paired && gz0 )
+  else if( !paired == 'PE' && gz0 )
     """
     ln -f $r0 ${id}_R0.fq.gz
     touch ${id}_R1.fq.gz ${id}_R2.fq.gz
@@ -98,14 +98,14 @@ process fqv {
   tuple val(id), val(paired), path("${id}_R?.fq.gz", includeInputs: true)
 
   script:
-  if( paired && params.interleaved )
+  if( paired =='PE' && params.interleaved )
     """
     rm $r1 $r2
     zcat $r0 |\
       deinterleave_fastq.sh $r1 $r2 ${task.cpus} compress
     rm $r0
     """
-  else if ( paired && !params.interleaved )
+  else if ( paired == 'PE' && !params.interleaved )
     """
     rm $r0
     """
@@ -126,7 +126,7 @@ process fqs {
   tuple val(id), val(paired), path("${id}_R?.fq.gz", includeInputs: true)
 
   script:
-  if( paired )
+  if( paired == 'PE')
     """
     s3cmd get $r1 ${id}_R1.fq.gz
     s3cmd get $r2 ${id}_R2.fq.gz
