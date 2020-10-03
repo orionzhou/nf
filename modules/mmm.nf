@@ -112,7 +112,7 @@ process dreme {
 
 process mg_fimo {
   label 'medium_memory'
-  conda "$NXF_CONDA_CACHEDIR/r"
+  //conda "$NXF_CONDA_CACHEDIR/r"
   publishDir "${params.outdir}", mode:'copy', overwrite: true
 
   input:
@@ -130,7 +130,7 @@ process mg_fimo {
 
 process mg_dreme {
   label 'medium_memory'
-  conda "$NXF_CONDA_CACHEDIR/r"
+  //conda "$NXF_CONDA_CACHEDIR/r"
   publishDir "${params.outdir}", mode:'copy', overwrite: true
 
   input:
@@ -181,4 +181,32 @@ workflow mmd {
     mg_dreme = mg_dreme.out
 }
 
+process ml1 {
+  label 'medium_memory'
+  publishDir "${params.outdir}/03_out", mode:'copy', overwrite: true
+  tag "${id}_${perm}"
 
+  input:
+  tuple val(id), val(perm), path(fi)
+
+  output:
+  tuple path("${oid}.rds"), path("${oid}.fit.rds")
+
+  script:
+  alg = 'rf'
+  fold = 10
+  nlevel = 4
+  oid = "${id}_${perm}"
+  """
+  ml_classification.R --alg $alg --fold $fold --nlevel $nlevel --downsample --seed $perm --cpu ${task.cpus} $fi ${oid}.rds ${oid}.fit.rds
+  """
+}
+
+workflow ml {
+  take:
+    data_lst
+  main:
+    data_lst | ml1
+  emit:
+    data_out = ml1.out
+}

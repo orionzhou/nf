@@ -130,6 +130,12 @@ if (opt == 'bam_stat') {
         select(sid,chr,pos,ref,alt,gt,allele1,allele2)
     saveRDS(to, file=fo)
     #}}}
+} else if (opt == 'rds') {
+    to = ti %>%
+        mutate(data = map(fi, readRDS)) %>%
+        select(sid, data) %>%
+        unnest(data)
+    saveRDS(to, file=fo)
 } else {
     stop("unknown option", opt, "\n")
 }
