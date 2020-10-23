@@ -1,18 +1,27 @@
 #!/usr/bin/env Rscript
 suppressPackageStartupMessages(require(argparse))
 
-parser <- ArgumentParser(description = 'save genome stats to .rds')
-parser$add_argument("genome", default='Zmays_B73', help="genome")
-parser$add_argument("fo", help="output (.rds) file")
-parser$add_argument("--dirg", default='~/projects/genome/data',
+ps <- ArgumentParser(description = 'save genome stats to .rds')
+ps$add_argument("genome", default='Zmays_B73', help="genome")
+ps$add_argument("fo", help="output (.rds) file")
+ps$add_argument("--dirg", default='~/projects/genome/data',
                     help="genome directory [default: %(default)s]")
-args <- parser$parse_args()
+args <- ps$parse_args()
 
 genome = args$genome
 dirg = args$dirg
 
-require(devtools)
-load_all('~/git/rmaize')
+#require(devtools)
+#load_all('~/git/rmaize')
+require(tidyverse)
+
+flattern_gcoord_prepare <- function(t_size, gap=2e7) {
+    #{{{
+    offsets = c(0, cumsum(t_size$size + gap)[-nrow(t_size)])
+    t_size %>% mutate(offset = offsets) %>%
+        mutate(start=1+offset, end=size+offset, pos=(start+end)/2)
+    #}}}
+}
 
 dirw = file.path(dirg, genome)
 fi = file.path(dirw, '15_intervals', '01.chrom.bed')

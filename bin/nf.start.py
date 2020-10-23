@@ -71,7 +71,7 @@ def check_fastq(design, paired, source):
             if source1 == 'local':
                 assert op.isfile(r0)
             elif source1 == 'sra':
-                assert r0.startswith("SRR")
+                assert r0.startswith("SRR") or r0.startswith("DRR")
             elif source1 == 's3':
                 assert r0.startswith("s3://")
         else:

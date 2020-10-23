@@ -1,15 +1,15 @@
 #!/usr/bin/env Rscript
 suppressPackageStartupMessages(library("argparse"))
 
-parser <- ArgumentParser(description = 'merge stats tables')
-parser$add_argument("fi", nargs='+', help = "tabular stats file(s)")
-parser$add_argument("-o", dest = 'fo', metavar = 'output',
-                    nargs=1, default="stats.tsv",
-                    help = "output file [default: %(default)s]")
-parser$add_argument("--opt", metavar = 'option',
-                    nargs=1, default="bam_stat",
-                    help = "stats file format [default: %(default)s]")
-args <- parser$parse_args()
+ps <- ArgumentParser(description = 'merge stats tables')
+ps$add_argument("fi", nargs='+', help = "input stats file(s)")
+ps$add_argument("-o", dest = 'fo', metavar = 'output',
+                 nargs=1, default="stats.tsv",
+                 help = "output file [default: %(default)s]")
+ps$add_argument("--opt", metavar = 'option',
+                 nargs=1, default="bam_stat",
+                 help = "stats file format [default: %(default)s]")
+args <- ps$parse_args()
 
 fis = args$fi
 fo = args$fo

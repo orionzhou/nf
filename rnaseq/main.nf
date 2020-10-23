@@ -25,8 +25,8 @@ prep_params(params, workflow)
     .ifEmpty { exit 1, "sample design table missing: ${params.design}" }
   design2 = Channel
     .fromPath("${params.qcdir}/${params.name}/01.meta.tsv")
-  if (params.aligner != 'star' && params.aligner != 'hisat2') {
-      exit 1, "Invalid aligner option: ${params.aligner}. Valid options: 'star', 'hisat2'"
+  if (params.aligner != 'star' && params.aligner != 'hisat2' && params.aligner != 'minimap2') {
+      exit 1, "Invalid aligner option: ${params.aligner}. Valid options: 'star', 'hisat2', 'minimap2'"
   }
   if (params.fasta) {
     if (has_ext(params.fasta, 'gz')) {

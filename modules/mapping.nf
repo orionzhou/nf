@@ -196,6 +196,33 @@ process bsmk {
   """
 }
 
+process minimap2 {
+  label 'high_memory'
+  tag "$id"
+  publishDir "${params.outdir}/11_minimap2", mode:'copy', overwrite:'true',
+    saveAs: { fn ->
+      if (fn.indexOf(".bam") == -1) "logs/$fn"
+      else if (!params.saveBAM && fn == 'where_are_my_files.txt') fn
+      else if (params.saveBAM && fn != 'where_are_my_files.txt') fn
+      else null
+    }
+
+  input:
+  tuple val(id), val(paired), path(reads), path(index)
+
+  output:
+  tuple val(id), path("${id}.bam"), emit: bam
+  path "${id}.log", emit: log optional true
+
+  script:
+  rg = "'@RG\\tID:${id}\\tSM:${id}\\tPL:ILLUMINA'"
+  """
+  minimap2 -ax splice -uf -k14 -G 90000 \\
+    ${index} ${reads} -t ${task.cpus} -R $rg |\\
+    samtools view -@ ${task.cpus} -bSh -O BAM -o ${id}.bam -
+  """
+}
+
 workflow aln {
   take: reads
   main:
@@ -236,6 +263,11 @@ workflow aln {
         bwa(reads.combine(bwa_index))
         aln = bwa.out
       }
+    } else if (params.aligner == 'minimap2') {
+      genome_fasta = Channel.fromPath(params.fasta, checkIfExists: true)
+        .ifEmpty { exit 1, "Genome fasta file not found: ${params.fasta}" }
+      minimap2(reads.combine(genome_fasta))
+      aln = minimap2.out
     }
   emit:
     bam = aln.bam

@@ -16,8 +16,9 @@ process cage1 {
 
   script:
   mq = params.mapQuality
+  genome = params.genome.replaceAll("_",".")
   """
-  $baseDir/bin/rnaseq/bam2bw.R $bam -o1 ${id}.plus.bw -o2 ${id}.minus.bw
+  $baseDir/bin/rnaseq/bam2bw.R $bam -o1 ${id}.plus.bw -o2 ${id}.minus.bw -genome BSgenome.${genome}
   """
 }
 

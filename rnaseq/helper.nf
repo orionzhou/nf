@@ -104,8 +104,8 @@ def prep_params(params, workflow) {
     params.stranded = 'forward'
   }
   // aligner
-  if (params.aligner != 'star' && params.aligner != 'hisat2')
-    exit 1, "Invalid aligner option: ${params.aligner}. Valid options: 'star', 'hisat2'"
+  if (params.aligner != 'star' && params.aligner != 'hisat2' && params.aligner != 'minimap2')
+    exit 1, "Invalid aligner option: ${params.aligner}. Valid options: 'star', 'hisat2', 'minimap2'"
   params.biotype = params.gencode ? "gene_type" : params.fc_group_features_type
 
   // uppmax

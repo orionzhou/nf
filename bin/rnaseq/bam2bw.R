@@ -10,7 +10,7 @@ parser$add_argument("-o2", dest = 'fo2', metavar = 'output bigwig (-)',
                     nargs=1, default="CTSS.minus.bw",
                     help = "bigwig (-) file [default: %(default)s]")
 parser$add_argument("-genome", dest = 'genome', metavar = 'genome',
-                    nargs=1, default="BSgenome.Zmays.B73v4",
+                    nargs=1, default="BSgenome.Zmays.B73",
                     help = "BSgenome [default: %(default)s]")
 args <- parser$parse_args()
 

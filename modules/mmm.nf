@@ -124,7 +124,7 @@ process mg_fimo {
   script:
   //bioawk -t '{print substr(FILENAME,1,length(FILENAME)-4), \$1, \$2, \$3, \$4, \$5}' $fis > fimo.tsv
   """
-  merge.fimo.R -o fimo.rds $fis
+  $baseDir/bin/mmm/merge.fimo.R -o fimo.rds $fis
   """
 }
 
@@ -138,12 +138,12 @@ process mg_dreme {
   path(f_tsvs)
 
   output:
-  tuple path("dreme.rds"), path("dreme.meme"), path("dreme.txt"), path("dreme_kmer.tsv")
+  tuple path("23.dreme.rds"), path("23.dreme.meme"), path("23.dreme.txt"), path("23.kmer.tsv"), path("23.kmer.motif.tsv"), path("23.kmer.txt")
 
   script:
   """
-  merge.dreme.R -o dreme.rds --meme dreme.meme --txt dreme.txt $f_mtfs
-  merge.dreme.kmer.R -o dreme_kmer.tsv $f_tsvs
+  $baseDir/bin/mmm/merge.dreme.R -o 23.dreme.rds --meme 23.dreme.meme --txt 23.dreme.txt $f_mtfs
+  $baseDir/bin/mmm/merge.dreme.kmer.R --fok 23.kmer.tsv --fom 23.kmer.motif.tsv --fos 23.kmer.txt $f_tsvs
   """
 }
 
@@ -183,30 +183,52 @@ workflow mmd {
 
 process ml1 {
   label 'medium_memory'
-  publishDir "${params.outdir}/03_out", mode:'copy', overwrite: true
-  tag "${id}_${perm}"
+  publishDir "${params.outdir}", mode:'copy', overwrite: true,
+    saveAs: { fn ->
+      if (fn.indexOf(".rds") > 0) "41_ml/$fn"
+      else null
+    }
+  tag "${id}"
 
   input:
-  tuple val(id), val(perm), path(fi)
+  tuple val(id), path(fi)
 
   output:
-  tuple path("${oid}.rds"), path("${oid}.fit.rds")
+  tuple val(id), path("${id}.rds")
 
   script:
   alg = 'rf'
   fold = 10
   nlevel = 4
-  oid = "${id}_${perm}"
+  perm = 10
   """
-  ml_classification.R --alg $alg --fold $fold --nlevel $nlevel --downsample --seed $perm --cpu ${task.cpus} $fi ${oid}.rds ${oid}.fit.rds
+  ml_classification.R --perm $perm --alg $alg --fold $fold --nlevel $nlevel --downsample --seed $perm --cpu ${task.cpus} $fi ${id}.rds
   """
 }
+
+process mg_ml {
+  label 'medium_memory'
+  publishDir "${params.outdir}", mode:'copy', overwrite: true
+
+  input:
+  path(fis)
+
+  output:
+  path("42.ml.rds")
+
+  script:
+  """
+  $baseDir/bin/merge.stats.R --opt rds -o 42.ml.rds $fis
+  """
+}
+
 
 workflow ml {
   take:
     data_lst
   main:
     data_lst | ml1
+    mg_ml(ml1.out.collect({it[1]}))
   emit:
-    data_out = ml1.out
+    mg_ml = mg_ml.out
 }

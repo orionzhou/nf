@@ -33,7 +33,7 @@ prep_params(params, workflow)
   data_lst = Channel.fromPath(params.data_lst, checkIfExists: true)
     .ifEmpty { exit 1, "no seq list found: ${params.lst}" }
     .splitCsv(header:true, sep:"\t")
-    .map { row -> [ row.did, row.perm, file("${params.data_lst_dir}/${row.did}.tsv", checkIfExists:true) ]}
+    .map { row -> [ row.did, file("${params.data_lst_dir}/${row.did}.tsv", checkIfExists:true) ]}
 
 
 include {mmk; mmd; ml} from '../modules/mmm.nf'
@@ -44,8 +44,8 @@ log.info show_header(sum)
 workflow {
   main:
     //mmk(seqdb, mtfs, mtf, fimo_bg)
-    //mmd(seqdb, lsts, bg_lsts, lst_pairs)
-    ml(data_lst)
+    mmd(seqdb, lsts, bg_lsts, lst_pairs)
+    //ml(data_lst)
   //publish:
     //mmk.out.fimo to: "${params.outdir}/11_fimo_raw", mode:'copy', overwrite: true
     //mmk.out.fimo2 to: "${params.outdir}/12_fimo_sum", mode:'copy', overwrite: true

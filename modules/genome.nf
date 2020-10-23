@@ -96,7 +96,7 @@ process gff_idx {
   publishDir "${params.outdir}/$id/50_annotation", mode:"copy", overwrite:'true'
 
   input:
-  tuple val(id), path(ref), path(fai), path(gff)
+  tuple val(id), path(ref), path(fai), path(sizes), path(gff)
 
   output:
   tuple val(id), path("10.gff.db"), emit: db
@@ -106,6 +106,7 @@ process gff_idx {
   tuple val(id), path("10.desc.tsv"), emit: desc
   tuple val(id), path("10.nt.fasta"), emit: fna
   tuple val(id), path("10.aa.fasta"), emit: faa
+  tuple val(id), path("10.sqlite"), emit: txdb
   tuple val(id), path("15.gff"), emit: pgff
   tuple val(id), path("15.gff.db"), emit: pdb
   tuple val(id), path("15.tsv"), emit: ptsv
@@ -124,6 +125,7 @@ process gff_idx {
 	gff.py note --attribute note1,note2 $gff > 10.desc.tsv
 	gff.py 2fas $gff $ref > 10.nt.fasta
 	fasta.py translate 10.nt.fasta > 10.aa.fasta
+	$baseDir/bin/genome/genome.txdb.R $gff $sizes 10.sqlite
 
 	gff.py picklong $gff > 15.gff
 	gff.py index 15.gff 15.gff.db
@@ -433,7 +435,7 @@ process i_rcfg {
   label 'mid_memory'
   tag "$id"
   publishDir "${params.outdir}/$id", mode:"copy", overwrite:'true'
-  conda "$NXF_CONDA_CACHEDIR/r"
+  //conda "$NXF_CONDA_CACHEDIR/r"
 
   when: tag == 'T'
 
@@ -483,7 +485,7 @@ workflow genome {
     gap = seqfmt.out.gap
 
     gff_cln(gff.join(gtable3, by:0).join(seqfmt.out.fchain, by:0))
-    gff_idx(seq.join(gff_cln.out, by:0))
+    gff_idx(seq.join(gff_cln.out, by:0).join(chrom_size, by:0))
     gff = gff_cln.out; pgff = gff_idx.out.pgff; gtf = gff_idx.out.gtf
     pfna = gff_idx.out.pfna; pfaa = gff_idx.out.pfaa; pbed = gff_idx.out.pbed
     ptsv = gff_idx.out.ptsv; pdesc = gff_idx.out.pdesc
