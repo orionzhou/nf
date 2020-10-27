@@ -101,6 +101,7 @@ process dreme {
   maxk = 13
   pval = 1e-4
   runtime = 180000
+  runtime = 324000
   //fimo --bfile --motif-- --thresh $pval2 ${id}.dreme $seq || (mkdir fimo_out; touch fimo_out/fimo.tsv)
   //mv fimo_out/fimo.tsv ${id}.tsv
   """

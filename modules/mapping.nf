@@ -216,8 +216,9 @@ process minimap2 {
 
   script:
   rg = "'@RG\\tID:${id}\\tSM:${id}\\tPL:ILLUMINA'"
+  //minimap2 -ax splice -uf -k14 -G 90000 \\
   """
-  minimap2 -ax splice -uf -k14 -G 90000 \\
+  minimap2 -ax splice -k14 -G 90000 \\
     ${index} ${reads} -t ${task.cpus} -R $rg |\\
     samtools view -@ ${task.cpus} -bSh -O BAM -o ${id}.bam -
   """

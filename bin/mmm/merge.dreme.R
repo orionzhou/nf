@@ -1,18 +1,18 @@
 #!/usr/bin/env Rscript
 suppressPackageStartupMessages(library("argparse"))
 
-parser <- ArgumentParser(description = 'merge dreme outputs')
-parser$add_argument("fi", nargs='+', help = "dreme output file(s)")
-parser$add_argument("-o", dest = 'fo', metavar = 'output',
-                    nargs=1, default="out.rds",
-                    help = "output file [default: %(default)s]")
-parser$add_argument("--meme", dest='fm', metavar = 'meme',
-                    nargs=1, default="out.meme",
-                    help = "merged motifs in meme format [default: %(default)s]")
-parser$add_argument("--txt", dest='ft', metavar = 'list',
-                    nargs=1, default="out.txt",
-                    help = "motif ID list [default: %(default)s]")
-args <- parser$parse_args()
+ps <- ArgumentParser(description = 'merge dreme outputs')
+ps$add_argument("fi", nargs='+', help = "dreme output file(s)")
+ps$add_argument("-o", dest = 'fo', metavar = 'output',
+                nargs=1, default="out.rds",
+                help = "output file [default: %(default)s]")
+ps$add_argument("--meme", dest='fm', metavar = 'meme',
+                nargs=1, default="out.meme",
+                help = "merged motifs in meme format [default: %(default)s]")
+ps$add_argument("--txt", dest='ft', metavar = 'list',
+                nargs=1, default="out.txt",
+                help = "motif ID list [default: %(default)s]")
+args <- ps$parse_args()
 
 fis = args$fi
 fo = args$fo
@@ -21,14 +21,7 @@ ft = args$ft
 
 require(tidyverse)
 require(universalmotif)
-require(tidygenomics)
-
-#fis = c(
-#'/home/springer/zhoux379/projects/stress/nf/raw/22a_dreme_mtf/l0421.dreme',
-#'/home/springer/zhoux379/projects/stress/nf/raw/22a_dreme_mtf/l0422.dreme',
-#'/home/springer/zhoux379/projects/stress/nf/raw/22b_dreme_fimo/l0421.tsv',
-#'/home/springer/zhoux379/projects/stress/nf/raw/22b_dreme_fimo/l0422.tsv'
-#)
+#require(tidygenomics)
 
 nfile = length(fis)
 ti = tibble(fi = fis) %>%

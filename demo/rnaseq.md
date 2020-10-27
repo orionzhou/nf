@@ -25,6 +25,6 @@ A test pipeline is under `nf/demo/rnaseq`:
 
     cd nf/demo/rnaseq
 
-Make necessary changes to `reads.tsv` and `nextflow.config`, then we can run the test pipeline using existing genome database on MSI-mesabi queue:
+Make necessary changes to `reads.tsv` and `nextflow.config`, as well as the genome index configuration file (`genomes.yml`), then we can run the test pipeline using existing genome database on MSI-mesabi queue:
 
-    nextflow run ../../rnaseq -params-file /home/springer/zhoux379/projects/genome/nf/genomes.yml -profile mesabi
+    nextflow run ../../rnaseq -params-file genomes.yml -profile mesabi

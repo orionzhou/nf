@@ -191,7 +191,7 @@ process fcnt {
   featureCounts -a $gtf -Q ${params.mapQuality} -T ${task.cpus} \\
     -g ${params.fc_group_features} -t ${params.fc_count_type} \\
     -o ${id}_gene.featureCounts.txt \\
-    $extra -p -s $drc $bam
+    $extra  -p -s $drc $bam
   """
 }
 

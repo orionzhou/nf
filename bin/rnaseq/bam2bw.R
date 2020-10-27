@@ -20,7 +20,7 @@ fo2 = args$fo2
 gen = args$genome
 
 require(CAGEr)
-require(BSgenome.Zmays.B73v4)
+#require(BSgenome.Zmays.B73)
 x = CAGEr:::import.bam.ctss(fi, filetype='bam',
                             sequencingQualityThreshold=10,
                             mappingQualityThreshold=20,
