@@ -18,22 +18,27 @@ prep_params(params, workflow)
     .ifEmpty { exit 1, "no motif list found: ${params.mtf}" }
     .splitCsv(header:true)
     .map { row -> [ row.fid ] }
-  lsts = Channel.fromPath(params.lst, checkIfExists: true)
-    .ifEmpty { exit 1, "no seq list found: ${params.lst}" }
+  //lsts = Channel.fromPath(params.lst, checkIfExists: true)
+    //.ifEmpty { exit 1, "no seq list found: ${params.lst}" }
+    //.splitCsv(header:true, sep:"\t")
+    //.map { row -> [ row.lid, file("${params.lstdir}/${row.lid}.txt", checkIfExists:true) ]}
+  //lst_pairs = Channel.fromPath(params.lst, checkIfExists: true)
+    //.ifEmpty { exit 1, "no seq list found: ${params.lst}" }
+    //.splitCsv(header:true, sep:"\t")
+    //.map { row -> [ row.lid, row.clid ] }
+  //bg_lsts = Channel.fromPath(params.bg_lst, checkIfExists: true)
+    //.ifEmpty { exit 1, "no bg list found: ${params.lst}" }
+    //.splitCsv(header:true, sep:"\t")
+    //.map { row -> [ row.lid, file("${params.bg_lstdir}/${row.lid}.txt", checkIfExists:true) ]}
+  ml_cfg = Channel.fromPath(params.ml_cfg, checkIfExists: true)
+    .ifEmpty { exit 1, "no ML training config found: ${params.ml_cfg}" }
     .splitCsv(header:true, sep:"\t")
-    .map { row -> [ row.lid, file("${params.lstdir}/${row.lid}.txt", checkIfExists:true) ]}
-  lst_pairs = Channel.fromPath(params.lst, checkIfExists: true)
-    .ifEmpty { exit 1, "no seq list found: ${params.lst}" }
-    .splitCsv(header:true, sep:"\t")
-    .map { row -> [ row.lid, row.clid ] }
-  bg_lsts = Channel.fromPath(params.bg_lst, checkIfExists: true)
-    .ifEmpty { exit 1, "no bg list found: ${params.lst}" }
-    .splitCsv(header:true, sep:"\t")
-    .map { row -> [ row.lid, file("${params.bg_lstdir}/${row.lid}.txt", checkIfExists:true) ]}
-  data_lst = Channel.fromPath(params.data_lst, checkIfExists: true)
-    .ifEmpty { exit 1, "no seq list found: ${params.lst}" }
-    .splitCsv(header:true, sep:"\t")
-    .map { row -> [ row.did, file("${params.data_lst_dir}/${row.did}.tsv", checkIfExists:true) ]}
+    .map { row -> [ row.did, row.bin, row.epi, row.nfea, row.mod,
+      file("${params.ml_seqdb_dir}/${row.gt}/02.fas", checkIfExists:true),
+      file("${params.ml_module_dir}/${row.gt}/${row.bnid}.tsv", checkIfExists:true),
+      file("${params.ml_best_mtf_dir}/${row.bnid}.tsv", checkIfExists:true),
+      file("${params.ml_seqdb_dir}/${row.gt}/05.umr.bed", checkIfExists:true)
+      ]}
 
 
 include {mmk; mmd; ml} from '../modules/mmm.nf'
@@ -44,8 +49,8 @@ log.info show_header(sum)
 workflow {
   main:
     //mmk(seqdb, mtfs, mtf, fimo_bg)
-    mmd(seqdb, lsts, bg_lsts, lst_pairs)
-    //ml(data_lst)
+    //mmd(seqdb, lsts, bg_lsts, lst_pairs)
+    ml(ml_cfg)
   //publish:
     //mmk.out.fimo to: "${params.outdir}/11_fimo_raw", mode:'copy', overwrite: true
     //mmk.out.fimo2 to: "${params.outdir}/12_fimo_sum", mode:'copy', overwrite: true

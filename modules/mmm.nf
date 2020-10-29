@@ -183,10 +183,27 @@ workflow mmd {
 }
 
 process ml1 {
+  label 'low_memory'
+  publishDir "${params.outdir}/41_ml_input", mode:'copy', overwrite: true
+  tag "${id}"
+
+  input:
+  tuple val(id), val(bin), val(epi), val(nfea), val(mod), path(db), path("module.tsv"), path("mtf.tsv"), path(umr)
+
+  output:
+  tuple val(id), path("${id}.tsv")
+
+  script:
+  """
+  kmer.py prepare_ml --bin '$bin' --epi $epi --nfea $nfea --mod $mod --umr $umr $db module.tsv mtf.tsv ${id}.tsv
+  """
+}
+
+process ml2 {
   label 'medium_memory'
   publishDir "${params.outdir}", mode:'copy', overwrite: true,
     saveAs: { fn ->
-      if (fn.indexOf(".rds") > 0) "41_ml/$fn"
+      if (fn.indexOf(".rds") > 0) "42_ml/$fn"
       else null
     }
   tag "${id}"
@@ -226,10 +243,10 @@ process mg_ml {
 
 workflow ml {
   take:
-    data_lst
+    ml_cfg
   main:
-    data_lst | ml1
-    mg_ml(ml1.out.collect({it[1]}))
+    ml_cfg | ml1 | ml2
+    mg_ml(ml2.out.collect({it[1]}))
   emit:
     mg_ml = mg_ml.out
 }
