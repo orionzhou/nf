@@ -63,7 +63,7 @@ if __name__ == "__main__":
     ps.add_argument('--r2', default='r2', help='read 2')
     ps.add_argument('--cpu', type=int, default=1, help='number processors/threads to use')
     ps.add_argument('--mem', type=int, default=20, help='size of memeroy (in GBs) to use')
-    ps.add_argument('--tmp', default=os.environ['tmp'], help='temporary directory to use')
+    ps.add_argument('--tmp', default='/scratch.global/zhoux379/temp', help='temporary directory to use')
 
     args = ps.parse_args()
     main(args)
