@@ -286,15 +286,24 @@ workflow fq {
   take: design
   main:
     raw_read_list = get_reads(design)
-    raw_read_list | fqu | (fqc & trim)
+    raw_read_list | fqu | fqc
+    trim_reads = Channel.empty(); trim_log = Channel.empty(); trim_fqc = Channel.empty()
+    if (params.skip_trimming) {
+      trim_reads = fqu.out
+    } else {
+      fqu | trim
+      trim_read = trim.out.reads
+      trim_log = trim.out.log
+      trim_fqc = trim.out.fastqc_zip
+    }
     mqc(fqc.out.zip.collect())
     upd(design, mqc.out, params.paired)
   emit:
     raw_reads = fqu.out
-    trim_reads = trim.out.reads
-    trim_log = trim.out.log
+    trim_reads = trim_reads
+    trim_log = trim_log
     raw_fqc = fqc.out.zip
-    trim_fqc = trim.out.fastqc_zip
+    trim_fqc = trim_fqc
     readlist = upd.out
 }
 

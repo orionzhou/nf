@@ -225,18 +225,23 @@ process ml2 {
 }
 
 process mg_ml {
-  label 'medium_memory'
+  label 'high_memory'
   publishDir "${params.outdir}", mode:'copy', overwrite: true
+  publishDir "${params.ml_dir}", mode:'copy', overwrite: true,
+    saveAs: { fn ->
+      if (fn.indexOf(".rds") > 0) "${params.ml_tag}.rds"
+      else null
+    }
 
   input:
   path(fis)
 
   output:
-  path("42.ml.rds")
+  path("43.ml.rds")
 
   script:
   """
-  $baseDir/bin/merge.stats.R --opt rds -o 42.ml.rds $fis
+  $baseDir/bin/merge.stats.R --opt rds -o 43.ml.rds $fis
   """
 }
 

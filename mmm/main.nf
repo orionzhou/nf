@@ -30,8 +30,8 @@ prep_params(params, workflow)
     //.ifEmpty { exit 1, "no bg list found: ${params.lst}" }
     //.splitCsv(header:true, sep:"\t")
     //.map { row -> [ row.lid, file("${params.bg_lstdir}/${row.lid}.txt", checkIfExists:true) ]}
-  ml_cfg = Channel.fromPath(params.ml_cfg, checkIfExists: true)
-    .ifEmpty { exit 1, "no ML training config found: ${params.ml_cfg}" }
+  ml_cfg = Channel.fromPath("${params.ml_dir}/${params.ml_tag}.cfg.tsv", checkIfExists: true)
+    .ifEmpty { exit 1, "no ML training config found: ${params.ml_tag}" }
     .splitCsv(header:true, sep:"\t")
     .map { row -> [ row.did, row.bin, row.epi, row.nfea, row.mod,
       file("${params.ml_seqdb_dir}/${row.gt}/02.fas", checkIfExists:true),

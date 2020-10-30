@@ -269,7 +269,7 @@ if __name__ == "__main__":
     sp1.add_argument('fi', nargs='+', help = 'input SAM/BAM file(s)')
     sp1.add_argument('--order', default='pos', choices=['pos','name'], help = 'sort order')
     sp1.add_argument('--threads', default=1, type=int, help = 'num. threads to use')
-    sp1.add_argument('--tmpdir', default=os.environ['tmp'], help = 'temporary dir')
+    sp1.add_argument('--tmpdir', default='/scratch.global/zhoux379/temp', help = 'temporary dir')
     sp1.set_defaults(func = bam_sort)
 
     sp1 = sp.add_parser("filter",
