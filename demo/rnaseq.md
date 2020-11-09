@@ -16,6 +16,11 @@ Clone the repo to local:
 
     git clone https://github.com/orionzhou/nf.git
 
+(or if you cloned the repo a while ago) update the local repo (if there are new changes):
+
+    cd nf
+    git pull
+
 [Create a conda environment](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#creating-an-environment-from-an-environment-yml-file) in order to run the pipeline:
 
     conda env create -f nf/configs/environments/rnaseq.yml
