@@ -18,14 +18,13 @@ prep_params(params, workflow)
     .ifEmpty { exit 1, "no motif list found: ${params.mtf}" }
     .splitCsv(header:true)
     .map { row -> [ row.fid ] }
-  //lsts = Channel.fromPath(params.lst, checkIfExists: true)
-    //.ifEmpty { exit 1, "no seq list found: ${params.lst}" }
-    //.splitCsv(header:true, sep:"\t")
-    //.map { row -> [ row.lid, file("${params.lstdir}/${row.lid}.txt", checkIfExists:true) ]}
-  //lst_pairs = Channel.fromPath(params.lst, checkIfExists: true)
-    //.ifEmpty { exit 1, "no seq list found: ${params.lst}" }
-    //.splitCsv(header:true, sep:"\t")
-    //.map { row -> [ row.lid, row.clid ] }
+  dm_lst_pairs = Channel.fromPath("${params.dm_dir}/${params.dm_tag}.tsv", checkIfExists: true)
+    .ifEmpty { exit 1, "no seq list found: ${params.dm_tag}" }
+    .splitCsv(header:true, sep:"\t")
+    .map { row -> [ row.lid,
+      file("${params.dm_dir}/${params.dm_tag}_seqlsts/${row.lid}.fas", checkIfExists:true),
+      file("${params.dm_dir}/${params.dm_tag}_seqlsts/${row.clid}.fas", checkIfExists:true)
+      ] }
   //bg_lsts = Channel.fromPath(params.bg_lst, checkIfExists: true)
     //.ifEmpty { exit 1, "no bg list found: ${params.lst}" }
     //.splitCsv(header:true, sep:"\t")
@@ -41,7 +40,7 @@ prep_params(params, workflow)
       ]}
 
 
-include {mmk; mmd; ml} from '../modules/mmm.nf'
+include {dm; ml} from '../modules/mmm.nf'
 
 def sum = summary()
 log.info show_header(sum)
@@ -49,8 +48,8 @@ log.info show_header(sum)
 workflow {
   main:
     //mmk(seqdb, mtfs, mtf, fimo_bg)
-    //mmd(seqdb, lsts, bg_lsts, lst_pairs)
-    ml(ml_cfg)
+    dm(dm_lst_pairs)
+    //ml(ml_cfg)
   //publish:
     //mmk.out.fimo to: "${params.outdir}/11_fimo_raw", mode:'copy', overwrite: true
     //mmk.out.fimo2 to: "${params.outdir}/12_fimo_sum", mode:'copy', overwrite: true

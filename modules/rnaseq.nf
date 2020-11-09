@@ -164,7 +164,7 @@ process fcnt {
     }
 
   input:
-  tuple val(id), path(bam), path(bai), path(gtf), path(biotypes_header)
+  tuple val(id), path(bam), path(bai), path(gtf), path(biotypes_header), val(paired), path(reads)
 
   output:
   path "${id}_gene.featureCounts.txt", emit: txt
@@ -172,12 +172,15 @@ process fcnt {
   path "${id}_biotype_counts*mqc.{txt,tsv}", emit: biotype optional true
 
   script:
-  def extra = params.fc_extra_attributes ? "--extraAttributes ${params.fc_extra_attributes}" : ''
-  def drc = params.stranded == 'no' ? 0 : params.stranded=='reverse' ? 2 : 1
+  def mq = params.mapQuality
+  def flag_attr = params.fc_extra_attributes ? "--extraAttributes ${params.fc_extra_attributes}" : ''
+  def flag_srd = params.stranded == 'no' ? 0 : params.stranded=='reverse' ? 2 : 1
+  def flag_pe = paired == 'PE' ? "-p" : ""
+  def flag_long = params.read_type == 'nanopore' ? "-L" : ""
   biotype_qc = params.skip_biotype_qc ? '' : """
     featureCounts -a $gtf -g ${params.biotype} \\
     -o ${id}_biotype.featureCounts.txt -p \\
-    -s $drc $bam
+    -s $flag_srd $bam
     """.stripIndent()
   mod_biotype = params.skip_biotype_qc ? '' : """
     cut -f 1,7 ${id}_biotype.featureCounts.txt | \\
@@ -188,10 +191,11 @@ process fcnt {
   //$biotype_qc
   //$mod_biotype
   """
-  featureCounts -a $gtf -Q ${params.mapQuality} -T ${task.cpus} \\
+  featureCounts -a $gtf --primary -Q $mq -T ${task.cpus} \\
     -g ${params.fc_group_features} -t ${params.fc_count_type} \\
     -o ${id}_gene.featureCounts.txt \\
-    $extra  -p -s $drc $bam
+    $flag_attr $flag_pe $flag_long -s $flag_srd \\
+    $bam
   """
 }
 
@@ -371,7 +375,7 @@ workflow rnaseq {
     ch_biotypes_header = Channel.fromPath("$baseDir/assets/biotypes_header.txt", checkIfExists: true)
     ch_mdsplot_header = Channel.fromPath("$baseDir/assets/mdsplot_header.txt", checkIfExists: true)
     ch_heatmap_header = Channel.fromPath("$baseDir/assets/heatmap_header.txt", checkIfExists: true)
-    fcnt(bams.combine(gtf).combine(ch_biotypes_header))
+    fcnt(bams.combine(gtf).combine(ch_biotypes_header).join(reads))
     corr(fcnt.out.txt.collect(), fcnt.out.txt.count(), ch_mdsplot_header, ch_heatmap_header)
 
     stie_out = Channel.empty()

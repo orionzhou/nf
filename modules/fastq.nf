@@ -162,7 +162,7 @@ process fqc {
   """
 }
 
-process trim {
+process trim_galore {
   label 'low_memory'
   tag "$id"
   publishDir "${params.outdir}/02_trim_galore", mode:'copy', overwrite:'true',
@@ -288,13 +288,13 @@ workflow fq {
     raw_read_list = get_reads(design)
     raw_read_list | fqu | fqc
     trim_reads = Channel.empty(); trim_log = Channel.empty(); trim_fqc = Channel.empty()
-    if (params.skip_trimming) {
+    if (params.trimmer == "no") {
       trim_reads = fqu.out
-    } else {
-      fqu | trim
-      trim_read = trim.out.reads
-      trim_log = trim.out.log
-      trim_fqc = trim.out.fastqc_zip
+    } else if (params.trimmer == 'trim_galore'){
+      fqu | trim_galore
+      trim_read = trim_galore.out.reads
+      trim_log = trim_galore.out.log
+      trim_fqc = trim_galore.out.fastqc_zip
     }
     mqc(fqc.out.zip.collect())
     upd(design, mqc.out, params.paired)

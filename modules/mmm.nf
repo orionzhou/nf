@@ -83,15 +83,15 @@ process meme {
 process dreme {
   label 'low_memory'
   tag "$id"
-  publishDir "${params.outdir}", mode:'copy', overwrite: true,
+  publishDir "${params.dm_out}/${params.dm_tag}", mode:'copy', overwrite: true,
     saveAs: { fn ->
-      if (fn.indexOf(".dreme") > 0) "22a_dreme_mtf/$fn"
-      else if (fn.indexOf(".tsv") > 0) "22b_dreme_kmer/${fn.replaceAll('.sum','')}"
+      if (fn.indexOf(".dreme") > 0) "motifs/$fn"
+      else if (fn.indexOf(".tsv") > 0) "kmers/${fn.replaceAll('.sum','')}"
       else null
     }
 
   input:
-  tuple val(id), val(clid), path(seq), path(cseq)
+  tuple val(id), path(seq), path(cseq)
 
   output:
   tuple val(id), path("${id}.dreme"), path("${id}.tsv")
@@ -132,19 +132,19 @@ process mg_fimo {
 process mg_dreme {
   label 'medium_memory'
   //conda "$NXF_CONDA_CACHEDIR/r"
-  publishDir "${params.outdir}", mode:'copy', overwrite: true
+  publishDir "${params.dm_out}/${params.dm_tag}", mode:'copy', overwrite: true
 
   input:
   path(f_mtfs)
   path(f_tsvs)
 
   output:
-  tuple path("23.dreme.rds"), path("23.dreme.meme"), path("23.dreme.txt"), path("23.kmer.tsv"), path("23.kmer.motif.tsv"), path("23.kmer.txt")
+  tuple path("dreme.rds"), path("kmer.tsv"), path("kmer.motif.tsv")
 
   script:
   """
-  $baseDir/bin/mmm/merge.dreme.R -o 23.dreme.rds --meme 23.dreme.meme --txt 23.dreme.txt $f_mtfs
-  $baseDir/bin/mmm/merge.dreme.kmer.R --fok 23.kmer.tsv --fom 23.kmer.motif.tsv --fos 23.kmer.txt $f_tsvs
+  $baseDir/bin/mmm/merge.dreme.R -o dreme.rds --meme dreme.meme --txt dreme.txt $f_mtfs
+  $baseDir/bin/mmm/merge.dreme.kmer.R --fok kmer.tsv --fom kmer.motif.tsv --fos kmer.txt $f_tsvs
   """
 }
 
@@ -162,22 +162,13 @@ workflow mmk {
     mg_fimo = mg_fimo.out
 }
 
-workflow mmd {
+workflow dm {
   take:
-    seqdb
-    lsts
-    bg_lsts
-    lst_pairs
+    dm_lst_pairs
   main:
-    seqret(bg_lsts.concat(lsts).combine(seqdb))
-    dreme_in = lst_pairs.combine(seqret.out, by: 0)
-      .map { row -> [ row[1], row[0], row[2] ] }
-      .combine(seqret.out, by: 0)
-      .map { row -> [ row[1], row[0], row[2], row[3] ] }
-    dreme(dreme_in)
+    dm_lst_pairs | dreme
     mg_dreme(dreme.out.collect({it[1]}), dreme.out.collect({it[2]}))
   emit:
-    seqs = seqret.out
     dreme = dreme.out
     mg_dreme = mg_dreme.out
 }
@@ -195,7 +186,7 @@ process ml1 {
 
   script:
   """
-  kmer.py prepare_ml --bin '$bin' --epi $epi --nfea $nfea --mod $mod --umr $umr $db module.tsv mtf.tsv ${id}.tsv
+  $baseDir/bin/kmer.py prepare_ml --bin '$bin' --epi $epi --nfea $nfea --mod $mod --umr $umr $db module.tsv mtf.tsv ${id}.tsv
   """
 }
 

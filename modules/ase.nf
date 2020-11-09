@@ -39,19 +39,21 @@ process ase2 {
   path "${name}.?.tsv", emit: gene
 
   script:
-  mq = params.mapQuality
-  def extraAttributes = params.fc_extra_attributes ? "--extraAttributes ${params.fc_extra_attributes}" : ''
-  def featureCounts_direction = params.stranded ? params.stranded=='reverse' ? 2 : 1 : 0
-  extra = "--primary -Q $mq -t exon -g gene_id --byReadGroup -s $featureCounts_direction"
+  def mq = params.mapQuality
+  def flag_attr = params.fc_extra_attributes ? "--extraAttributes ${params.fc_extra_attributes}" : ''
+  def flag_srd = params.stranded == 'no' ? 0 : params.stranded=='reverse' ? 2 : 1
+  def flag_pe = ''//paired == 'PE' ? "-p" : ""
+  def flag_long = params.read_type == 'nanopore' ? "-L" : ""
+  extra = "--primary -Q $mq -t exon -g gene_id --byReadGroup -s $flag_srd"
   """
-  featureCounts -a $gtf -Q ${params.mapQuality} -T ${task.cpus} \\
-      -g ${params.fc_group_features} -t ${params.fc_count_type} \\
-      $extraAttributes -p -s $featureCounts_direction \\
-      -o ${name}.1.tsv $bam1
-  featureCounts -a $gtf -Q ${params.mapQuality} -T ${task.cpus} \\
-      -g ${params.fc_group_features} -t ${params.fc_count_type} \\
-      $extraAttributes -p -s $featureCounts_direction \\
-      -o ${name}.2.tsv $bam2
+  featureCounts -a $gtf --primary -Q $mq -T ${task.cpus} \\
+    -g ${params.fc_group_features} -t ${params.fc_count_type} \\
+    $flag_attr $flag_pe $flag_long -s $flag_srd \\
+    -o ${name}.1.tsv $bam1
+  featureCounts -a $gtf --primary -Q $mq -T ${task.cpus} \\
+    -g ${params.fc_group_features} -t ${params.fc_count_type} \\
+    $flag_attr $flag_pe $flag_long -s $flag_srd \\
+    -o ${name}.2.tsv $bam2
   """
 }
 

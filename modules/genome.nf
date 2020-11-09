@@ -1,6 +1,6 @@
 process download {
   label 'low_memory'
-  tag "$id"
+  tag "${params.genomes[id].alias}"
 
   input:
   tuple val(id), val(species), val(source), val(version), val(assembly), val(url_fas), val(url_gff)
@@ -31,7 +31,7 @@ process download {
 
 process seqfmt {
   label 'low_memory'
-  tag "$id"
+  tag "${params.genomes[id].alias}"
   publishDir "${params.outdir}/${id}", mode:"copy", overwrite:'true',
     saveAs: {fn ->
       if (fn.indexOf("10.fasta") >= 0) "$fn"
@@ -74,7 +74,7 @@ process seqfmt {
 
 process gff_cln {
   label 'low_memory'
-  tag "$id"
+  tag "${params.genomes[id].alias}"
   publishDir "${params.outdir}/$id/50_annotation", mode:"copy", overwrite:'true'
 
   input:
@@ -92,11 +92,11 @@ process gff_cln {
 
 process gff_idx {
   label 'mid_memory'
-  tag "$id"
+  tag "${params.genomes[id].alias}"
   publishDir "${params.outdir}/$id/50_annotation", mode:"copy", overwrite:'true'
 
   input:
-  tuple val(id), path(ref), path(fai), path(sizes), path(gff)
+  tuple val(id), path(ref), path(fai), path(gff), path(sizes)
 
   output:
   tuple val(id), path("10.gff.db"), emit: db
@@ -141,7 +141,7 @@ process gff_idx {
 // sequence db
 process i_blat {
   label 'low_memory'
-  tag "$id"
+  tag "${params.genomes[id].alias}"
   publishDir "${params.outdir}/$id/21_dbs/blat", mode:"copy", overwrite:'true'
 
   when: tag == 'T'
@@ -161,7 +161,7 @@ process i_blat {
 
 process i_gatk {
   label 'low_memory'
-  tag "$id"
+  tag "${params.genomes[id].alias}"
   publishDir "${params.outdir}/$id/21_dbs", mode:"copy", overwrite:'true'
 
   when: tag == 'T'
@@ -184,7 +184,7 @@ process i_gatk {
 
 process i_bwa {
   label 'low_memory'
-  tag "$id"
+  tag "${params.genomes[id].alias}"
   publishDir "${params.outdir}/$id/21_dbs", mode:"copy", overwrite:'true'
 
   when: tag == 'T'
@@ -206,7 +206,7 @@ process i_bwa {
 
 process i_bismark {
   label 'low_memory'
-  tag "$id"
+  tag "${params.genomes[id].alias}"
   publishDir "${params.outdir}/$id/21_dbs", mode:"copy", overwrite:'true'
 
   when: tag == 'T'
@@ -229,7 +229,7 @@ process i_bismark {
 // fna + faa
 process i_blastn {
   label 'low_memory'
-  tag "$id"
+  tag "${params.genomes[id].alias}"
   publishDir "${params.outdir}/$id/21_dbs", mode:"copy", overwrite:'true'
 
   when: tag == 'T'
@@ -250,7 +250,7 @@ process i_blastn {
 
 process i_blastp {
   label 'low_memory'
-  tag "$id"
+  tag "${params.genomes[id].alias}"
   publishDir "${params.outdir}/$id/21_dbs", mode:"copy", overwrite:'true'
 
   when: tag == 'T'
@@ -271,7 +271,7 @@ process i_blastp {
 
 process i_lastn {
   label 'low_memory'
-  tag "$id"
+  tag "${params.genomes[id].alias}"
   publishDir "${params.outdir}/$id/21_dbs", mode:"copy", overwrite:'true'
 
   when: tag == 'T'
@@ -292,7 +292,7 @@ process i_lastn {
 
 process i_lastp {
   label 'low_memory'
-  tag "$id"
+  tag "${params.genomes[id].alias}"
   publishDir "${params.outdir}/$id/21_dbs", mode:"copy", overwrite:'true'
 
   when: tag == 'T'
@@ -313,7 +313,7 @@ process i_lastp {
 
 process i_salmon {
   label 'low_memory'
-  tag "$id"
+  tag "${params.genomes[id].alias}"
   publishDir "${params.outdir}/$id/21_dbs", mode:"copy", overwrite:'true'
 
   when: tag == 'T'
@@ -335,7 +335,7 @@ process i_salmon {
 // fasta + gtf
 process i_star {
   label 'low_memory'
-  tag "$id"
+  tag "${params.genomes[id].alias}"
   publishDir "${params.outdir}/$id/21_dbs", mode:"copy", overwrite:'true'
 
   when: tag == 'T'
@@ -358,7 +358,7 @@ process i_star {
 
 process i_hisat2 {
   label 'low_memory'
-  tag "$id"
+  tag "${params.genomes[id].alias}"
   publishDir "${params.outdir}/$id/21_dbs", mode:"copy", overwrite:'true'
 
   when: tag == 'T'
@@ -382,7 +382,7 @@ process i_hisat2 {
 
 process i_snpeff {
   label 'low_memory'
-  tag "$id"
+  tag "${params.genomes[id].alias}"
   publishDir "${params.outdir}/$id/21_dbs", mode:"copy", overwrite:'true'
 
   when: tag == 'T'
@@ -407,7 +407,7 @@ process i_snpeff {
 
 process i_tandup {
   label 'mid_memory'
-  tag "$id"
+  tag "${params.genomes[id].alias}"
   publishDir "${params.outdir}/$id/52_tandup", mode:"copy", overwrite:'true'
 
   when: tag == 'T'
@@ -433,7 +433,7 @@ process i_tandup {
 
 process i_rcfg {
   label 'mid_memory'
-  tag "$id"
+  tag "${params.genomes[id].alias}"
   publishDir "${params.outdir}/$id", mode:"copy", overwrite:'true'
   //conda "$NXF_CONDA_CACHEDIR/r"
 
@@ -479,35 +479,35 @@ workflow genome {
 
     download(gtable1)
     seq = download.out.seq; gff = download.out.gff
-    seqfmt(seq.join(gtable2, by:0))
+    seqfmt(seq.combine(gtable2, by:0))
     seq = seqfmt.out.seq
     chrom_size = seqfmt.out.chrom_size; chrom_bed = seqfmt.out.chrom_bed
     gap = seqfmt.out.gap
 
-    gff_cln(gff.join(gtable3, by:0).join(seqfmt.out.fchain, by:0))
-    gff_idx(seq.join(gff_cln.out, by:0).join(chrom_size, by:0))
+    gff_cln(gff.combine(gtable3, by:0).combine(seqfmt.out.fchain, by:0))
+    gff_idx(seq.combine(gff_cln.out, by:0).combine(chrom_size, by:0))
     gff = gff_cln.out; pgff = gff_idx.out.pgff; gtf = gff_idx.out.gtf
     pfna = gff_idx.out.pfna; pfaa = gff_idx.out.pfaa; pbed = gff_idx.out.pbed
     ptsv = gff_idx.out.ptsv; pdesc = gff_idx.out.pdesc
 
-    seq.join(gt_blat, by:0) | i_blat
-    seq.join(gt_gatk, by:0) | i_gatk
-    seq.join(gt_bwa, by:0) | i_bwa
-    seq.join(gt_bismark, by:0) | i_bismark
-    pfna.join(gt_blast, by:0) | i_blastn
-    pfna.join(gt_last, by:0) | i_lastn
-    pfna.join(gt_salmon, by:0) | i_salmon
-    pfaa.join(gt_blast, by:0) | i_blastp
-    pfaa.join(gt_last, by:0) | i_lastp
-    seq.join(gtf, by:0).join(gt_star, by:0) | i_star
-    seq.join(gtf, by:0).join(gt_hisat2, by:0) | i_hisat2
-    seq.join(gtf, by:0).join(gt_snpeff, by:0) | i_snpeff
-    pfna.join(pfaa,by:0).join(pbed,by:0)
-      .join(i_blastn.out,by:0).join(i_blastp.out,by:0)
-      .join(gt_tandup,by:0) | i_tandup
-    chrom_size.join(chrom_bed,by:0).join(gap,by:0)
-      .join(ptsv, by:0).join(pdesc, by:0)
-      .join(gt_rcfg, by:0) | i_rcfg
+    seq.combine(gt_blat, by:0) | i_blat
+    seq.combine(gt_gatk, by:0) | i_gatk
+    seq.combine(gt_bwa, by:0) | i_bwa
+    seq.combine(gt_bismark, by:0) | i_bismark
+    pfna.combine(gt_blast, by:0) | i_blastn
+    pfna.combine(gt_last, by:0) | i_lastn
+    pfna.combine(gt_salmon, by:0) | i_salmon
+    pfaa.combine(gt_blast, by:0) | i_blastp
+    pfaa.combine(gt_last, by:0) | i_lastp
+    seq.combine(gtf, by:0).combine(gt_star, by:0) | i_star
+    seq.combine(gtf, by:0).combine(gt_hisat2, by:0) | i_hisat2
+    seq.combine(gtf, by:0).combine(gt_snpeff, by:0) | i_snpeff
+    pfna.combine(pfaa,by:0).combine(pbed,by:0)
+      .combine(i_blastn.out,by:0).combine(i_blastp.out,by:0)
+      .combine(gt_tandup,by:0) | i_tandup
+    chrom_size.combine(chrom_bed,by:0).combine(gap,by:0)
+      .combine(ptsv, by:0).combine(pdesc, by:0)
+      .combine(gt_rcfg, by:0) | i_rcfg
 
   emit:
     seq = seqfmt.out.seq

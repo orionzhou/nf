@@ -9,27 +9,30 @@ def help() {
 
     The typical command for running the pipeline is as follows:
 
-      nextflow run $nfc/genome -profile msi_mesabi
+      nextflow run $nf/wgc -profile msi
 
     Mandatory arguments:
-      --design [file]                 tab-separated file containing genome information
-      -profile [str]                  Configuration profile to use. Can use multiple (comma separated)
-                                      Available: msi_mesabi, msi_mangi
+      -qry [str]                 query genome
+      -tgt [str]                 target genome
+      -profile [str]             Configuration profile to use. Can use multiple (comma separated)
+                                 Available: msi, msi_mesabi, msi_mangi
 
   """.stripIndent()
 }
 
 def prep_params(params, workflow) {
-  if (!params.design) exit 1, "no genome design file specified"
   if (!params.name) params.name = workflow.runName
+  //if (!params.qry || !params.genomes.containsKey(params.qry))
+    //exit 1, "The query genome '${params.qry}' is not available. Current available genomes are ${params.genomes.keySet().join(", ")}"
+  //if (!params.tgt || !params.genomes.containsKey(params.tgt))
+    //exit 1, "The target genome '${params.tgt}' is not available. Current available genomes are ${params.genomes.keySet().join(", ")}"
 }
 
 def summary() {
   def summary = [:]
   if (workflow.revision) summary['Pipeline Release'] = workflow.revision
   summary['Run Name'] = params.name ?: workflow.runName
-  summary['Design'] = params.design
-  summary['Genomes'] = file(params.pick).readLines()
+  summary['Comparisons'] = "${params.comps}"
   summary['Max Resources'] = "$params.max_memory memory, $params.max_cpus cpus, $params.max_time time per job"
   if (workflow.containerEngine) summary['Container'] = "$workflow.containerEngine - $workflow.container"
   summary['Output dir'] = params.outdir

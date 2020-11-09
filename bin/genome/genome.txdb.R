@@ -13,7 +13,8 @@ f_gff = args$gff
 f_size = args$sizes
 fo = args$fo
 
-require(tidyverse)
+require(dplyr)
+require(readr)
 require(GenomicFeatures)
 
 chromInfo = read_tsv(f_size, col_names=c('chrom','length'))

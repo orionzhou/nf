@@ -25,10 +25,13 @@ def main(args):
         #if not status in ['C','T']: continue
         jd1 = dict()
         pre = "%s/data/%s" % (args.dirg, genome)
+        jd1['alias'] = gl['alias'][i]
+        jd1['prefix'] = gl['prefix'][i]
         jd1['fasta'] = "%s/10.fasta" % pre
         jd1['fasta_idx'] = "%s/10.fasta.fai" % pre
         jd1['genome_bed'] = "%s/15_intervals/01.chrom.bed" % pre
         jd1['genome_sizes'] = "%s/15_intervals/01.chrom.sizes" % pre
+        jd1['gap_bed'] = "%s/15_intervals/11.gap.bed" % pre
         if op.isfile(jd1['genome_sizes']):
             jd1['macs_gsize'] = get_gsize(jd1['genome_sizes'])
         # annotation
@@ -43,6 +46,10 @@ def main(args):
         jd1['pbed'] = "%s/50_annotation/15.bed" % pre
         jd1['pfna'] = "%s/50_annotation/15.nt.fasta" % pre
         jd1['pfaa'] = "%s/50_annotation/15.aa.fasta" % pre
+        if gl['blat'][i]:
+            jd1['blat'] = "%s/21_dbs/blat/db.2bit" % pre
+        if gl['gatk'][i]:
+            jd1['gatk'] = f"{pre}/21_dbs/gatk/"
         if gl['star'][i]:
             jd1['star'] = "%s/21_dbs/star/" % pre
         if gl['hisat2'][i]:

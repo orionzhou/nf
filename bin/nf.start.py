@@ -101,9 +101,11 @@ def nf_start(args):
     msg = tmp.render(yid = yid,
                      design = design,
                      source = args.source,
+                     read_type = args.read_type,
                      paired = args.paired,
                      interleaved = str(args.interleaved).lower(),
                      save_fastq = str(args.save_fastq).lower(),
+                     trimmer = args.trimmer,
                      save_trimmed = str(args.save_trimmed).lower(),
                      aligner = aligner,
                      saveBAM = str(args.saveBAM).lower(),
@@ -167,12 +169,14 @@ if __name__ == "__main__":
     ps.add_argument('--workdir', default=os.environ['NXF_WORK'], help = 'nextflow work dir')
     ps.add_argument('--rawdir', default="%s/raw" % os.environ['NXF_CACHE'], help = 'nextflow raw output dir')
     ps.add_argument('--source', default='sra', choices=allowed_sources, help='sequence source')
+    ps.add_argument('--read_type', default='illumina', choices=['illumina','nanopore'], help='read type')
     ps.add_argument('--paired', default='SE', choices=['SE','PE','mixed'], help='single end, paired end or mixed')
     ps.add_argument('--interleaved', action='store_true', help='interleaved format?')
     ps.add_argument('--metadir', default=os.environ['ba'], help = 'meta table directory')
     ps.add_argument('--genome', default='Zmays_B73', help = 'reference genome')
     ps.add_argument('--keep', action='store_true', help='keep previous results?')
     ps.add_argument('--save_fastq', action='store_true', help='save fastq files?')
+    ps.add_argument('--trimmer', default='trim_galore', choices=['no','trim_galore'], help='trimming software')
     ps.add_argument('--save_trimmed', action='store_true', help='save trimmed fastq files?')
     ps.add_argument('--aligner', default='auto', help='aligning software')
     ps.add_argument('--saveBAM', action='store_true', help='save bam files?')

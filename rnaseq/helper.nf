@@ -95,6 +95,10 @@ def prep_params(params, workflow) {
   if (!params.design) exit 1, "no design / meta file specified"
   if (!params.name) params.name = workflow.runName
   prep_params_genome(params)
+  if (params.read_type != 'illumina' && params.read_type != 'nanopore')
+    exit 1, "Invalid read type: ${params.read_type}. Valid options: 'illumina', 'nanopore'"
+  if (params.trimmer != 'no' && params.trimmer != 'trim_galore')
+    exit 1, "Invalid trimmer option: ${params.trimmer}. Valid options: 'no', 'trim_galore'"
   // Preset trimming options
   if (params.pico) {
     params.clip_r1 = 3
@@ -129,15 +133,14 @@ def summary() {
   summary['Run Name'] = params.name ?: workflow.runName
   summary['Design'] = params.design
   summary['Source'] = params.source
+  summary['Read type'] = params.read_type
   summary['Paired'] = params.paired
   summary['Stranded'] = params.stranded
   summary['Genome'] = params.genome
+  summary['Trimmer'] = params.trimmer
+  //summary['Trimming'] = "5'R1: $params.clip_r1 / 5'R2: $params.clip_r2 / 3'R1: $params.three_prime_clip_r1 / 3'R2: $params.three_prime_clip_r2 / NextSeq Trim: $params.trim_nextseq"
   //summary['Remove rRNA'] = params.removeRiboRNA
   if (params.pico) summary['Library Prep'] = "SMARTer Stranded Total RNA-Seq Kit - Pico Input"
-  if (params.save_fastq) summary['Save raw fastq'] = params.save_fastq ? 'T':'F'
-  if (params.save_trimmed) summary['Save trimmed fastq'] = params.save_trimmed ? 'T':'F'
-  summary['Trimming'] = "5'R1: $params.clip_r1 / 5'R2: $params.clip_r2 / 3'R1: $params.three_prime_clip_r1 / 3'R2: $params.three_prime_clip_r2 / NextSeq Trim: $params.trim_nextseq"
-  if (params.genome) summary['Genome'] = params.genome
   summary['Aligner'] = params.aligner
   // if (params.gtf) summary['GTF Annotation'] = params.gtf
   // if (params.gff) summary['GFF3 Annotation'] = params.gff
@@ -147,7 +150,9 @@ def summary() {
   if (params.gencode) summary['GENCODE'] = params.gencode
   if (params.stringtie_ignore_gtf) summary['StringTie Ignore GTF'] = params.stringtie_ignore_gtf
   // if (params.fc_group_features_type) summary['Biotype GTF field'] = params.biotype
-  summary['Save prefs'] = "Ref Genome: "+(params.save_reference ? 'T' : 'F')+" / Trimmed FastQ: "+(params.save_trimmed ? 'T' : 'F')+" / Intermediate BAM: "+(params.saveBAM ? 'T' : 'F')
+  summary['Save prefs'] = "Raw FastQ: " + (params.save_fastq ? "T" : "F")
+  summary['Save prefs'] += " / Trimmed FastQ: " + (params.save_trimmed ? 'T' : 'F')
+  summary['Save prefs'] += " / Final BAM: " + (params.saveBAM ? 'T' : 'F')
   summary['Max Resources'] = "$params.max_memory memory, $params.max_cpus cpus, $params.max_time time per job"
   if (workflow.containerEngine) summary['Container'] = "$workflow.containerEngine - $workflow.container"
   summary['Output dir'] = params.outdir
