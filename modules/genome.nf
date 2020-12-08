@@ -17,8 +17,8 @@ process download {
   url_gff = source=='ensembl_plants' ? "${url_pre}/gff3/${species.toLowerCase()}/${species}.${assembly}.${version.replaceAll(/\.[0-9]+$/,'')}.gff3.gz" : url_gff
   if (source == 'local')
     """
-    ln -f ${url_fas} raw.fasta
-    ln -f ${url_gff} raw.gff
+    cp ${url_fas} raw.fasta
+    cp ${url_gff} raw.gff
     """
   else
     """

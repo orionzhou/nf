@@ -26,8 +26,8 @@ ti = tibble(fi = fis) %>%
     mutate(lid = str_replace(lid, '[\\.]\\w+$', '')) %>%
     select(-fname)
 
-rename_mid <- function(lid, mid) sprintf("%s_%03d", lid, as.numeric(str_replace(mid,'DREME-','')))
-tk = ti %>% mutate(r = map(fi, read_tsv, col_types='cccciidd')) %>%
+rename_mid <- function(lid, mid) sprintf("%s_%03d", lid, as.numeric(str_replace_all(mid,'.*REME-','')))
+tk = ti %>% mutate(r = map(fi, read_tsv, col_types='cccciiiidd')) %>%
     select(lid, r) %>% unnest(r) %>%
     mutate(mid = map2_chr(lid, mid, rename_mid))
 tom = tk %>% filter(!is.na(re)) %>% select(-re)

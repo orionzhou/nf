@@ -23,6 +23,8 @@ def summary() {
   if (workflow.revision) summary['Pipeline Release'] = workflow.revision
   summary['Run Name'] = params.name ?: workflow.runName
   summary['Config Profile'] = workflow.profile
+  summary['DREME tag'] = params.dm_tag
+  summary['ML tag'] = params.ml_tag
   if (params.config_profile_description) summary['Config Description'] = params.config_profile_description
   if (params.config_profile_contact)     summary['Config Contact']     = params.config_profile_contact
   if (params.config_profile_url)         summary['Config URL']         = params.config_profile_url

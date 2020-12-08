@@ -71,6 +71,7 @@ process merge {
 process chain {
   label 'mid_memory'
   tag "${params.genomes[qry].alias}-${params.genomes[tgt].alias}"
+  publishDir "${params.outdir}/${qry}-${tgt}", mode:'copy', overwrite: true
 
   input:
   tuple val(qry), val(tgt), path(psl), path('q.sizes'), path('q.2bit'), path('t.sizes'), path('t.2bit')
@@ -105,13 +106,16 @@ process post {
   tuple val(qry), val(tgt), path("aln.bed"), path("vnt.bed"), path("q.chain"), path("t.chain"), path("t.vcf.gz"), path("q.vcf.gz")
 
   script:
+  min_aln_size=50000
+  min_qry_size=50000
+  min_tgt_size=50000
   """
   chainStitchId $fi 01.stitched.chain
   chainFilter -minGapless=1000 01.stitched.chain > 02.filtered.chain
   chain.py 2bed 02.filtered.chain > 02.bed
   $baseDir/bin/wgc/chainBedVnt.R 02.bed 05.itv.bed
-  $baseDir/bin/wgc/wgc.py callvnt 05.itv.bed t.fas q.fas --vnt 05.vnt.bed > 05.bed
-  $baseDir/bin/wgc/chainBedFilter.R 05.bed aln.bed 05.vnt.bed vnt.bed
+  $baseDir/bin/wgc/wgc.py callvnt 05.itv.bed 05.vnt.bed --tgt t.fas --qry q.fas
+  $baseDir/bin/wgc/chainBedFilter.R --minsize ${min_aln_size} 02.bed aln.bed 05.vnt.bed vnt.bed
   chain.py fromBed aln.bed t.sizes q.sizes > t.chain
   chainSwap t.chain q.chain
   $baseDir/bin/wgc/wgc.py bed2vcf --tgt $tgt --qry $qry vnt.bed t.1.vcf q.1.vcf

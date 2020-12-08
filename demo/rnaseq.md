@@ -23,8 +23,8 @@ Clone the repo to local:
 
 [Create a conda environment](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#creating-an-environment-from-an-environment-yml-file) in order to run the pipeline:
 
-    conda env create -f nf/configs/environments/rnaseq.yml
-    conda env list
+    conda env create -n rnaseq -f nf/configs/environments/rnaseq.yml
+    conda env list # there should be a new environment named "rnaseq"
 
 A test pipeline is under `nf/demo/rnaseq`:
 

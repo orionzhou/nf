@@ -40,6 +40,8 @@ prep_params(params, workflow)
       .map {r -> [r[0], file(r[1].pfna, checkIfExists:true)]}
     qry_pfaa = qrys
       .map {r -> [r[0], file(r[1].pfaa, checkIfExists:true)]}
+    qry_pbed = qrys
+      .map {r -> [r[0], file(r[1].pbed, checkIfExists:true)]}
   // tgt seq
     tgt_fas = tgts
       .map {r -> [r[0], file(r[1].fasta, checkIfExists:true)]}
@@ -66,8 +68,13 @@ prep_params(params, workflow)
       .map {r -> [r[0], file(r[1].pfna, checkIfExists:true)]}
     tgt_pfaa = tgts
       .map {r -> [r[0], file(r[1].pfaa, checkIfExists:true)]}
+    tgt_pbed = tgts
+      .map {r -> [r[0], file(r[1].pbed, checkIfExists:true)]}
+  tgt_blastp = tgts
+    .map {r -> [r[0], file(r[1].blastp, checkIfExists:true)]}
 
 include {wgc} from '../modules/wgc.nf'
+include {syn} from '../modules/syntelog.nf'
 
 def sum = summary()
 log.info show_header(sum)
@@ -81,6 +88,8 @@ workflow {
         qry_gff, qry_pgff, qry_gatk,
         tgt_fas, tgt_gbed, tgt_sizes, tgt_gap, tgt_2bit,
         tgt_gff, tgt_pgff, tgt_gatk)
+    syn(comps, qry_pfaa, qry_pbed,
+        tgt_pfaa, tgt_pbed, tgt_blastp)
     //outdoc(ch_out_doc)
   //publish:
 }

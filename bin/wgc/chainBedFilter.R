@@ -35,9 +35,10 @@ tis = ti %>% mutate(alnlen = tend - tstart) %>%
               srd=srd[1],
               alnlen = sum(alnlen), block = n()) %>%
     filter(alnlen >= minsize)
-to = ti %>% filter(cid %in% tis$cid)
+to = ti %>% filter(cid %in% tis$cid) %>%
+    arrange(tchrom, tstart, tend)
 
-cat(sprintf("%d out of %d chains passed filtering\n", nrow(tis), length(ti$cid)))
+cat(sprintf("%d out of %d chains passed filtering\n", nrow(tis), length(unique(ti$cid))))
 write_tsv(to, fo, col_names = F)
 
 fvi = args$fvi

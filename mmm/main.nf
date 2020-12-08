@@ -10,33 +10,23 @@ prep_params(params, workflow)
   seqdb = Channel.fromPath([params.seqdb, params.seqdb_idx], checkIfExists: true)
     .ifEmpty { exit 1, "no seqdb found: ${params.seqdb}" }
     .toList()
-  fimo_bg = Channel.fromPath(params.fimo_bg, checkIfExists: true)
-    .ifEmpty { exit 1, "no fimo_bg file found: ${params.fimo_bg}" }
-  mtf = Channel.fromPath(params.mtf, checkIfExists: true)
-    .ifEmpty { exit 1, "no motif file found: ${params.mtf}" }
-  mtfs = Channel.fromPath(params.mtf_lst, checkIfExists: true)
-    .ifEmpty { exit 1, "no motif list found: ${params.mtf}" }
-    .splitCsv(header:true)
-    .map { row -> [ row.fid ] }
-  dm_lst_pairs = Channel.fromPath("${params.dm_dir}/${params.dm_tag}.tsv", checkIfExists: true)
+  //fimo_bg = Channel.fromPath(params.fimo_bg, checkIfExists: true)
+    //.ifEmpty { exit 1, "no fimo_bg file found: ${params.fimo_bg}" }
+  //mtf = Channel.fromPath(params.mtf, checkIfExists: true)
+    //.ifEmpty { exit 1, "no motif file found: ${params.mtf}" }
+  //mtfs = Channel.fromPath(params.mtf_lst, checkIfExists: true)
+    //.ifEmpty { exit 1, "no motif list found: ${params.mtf}" }
+    //.splitCsv(header:true)
+    //.map { row -> [ row.fid ] }
+  dm_cfg = Channel.fromPath("${params.dm_dir}/${params.dm_tag}/05.tl.tsv", checkIfExists: true)
     .ifEmpty { exit 1, "no seq list found: ${params.dm_tag}" }
     .splitCsv(header:true, sep:"\t")
-    .map { row -> [ row.lid,
-      file("${params.dm_dir}/${params.dm_tag}_seqlsts/${row.lid}.fas", checkIfExists:true),
-      file("${params.dm_dir}/${params.dm_tag}_seqlsts/${row.clid}.fas", checkIfExists:true)
-      ] }
-  //bg_lsts = Channel.fromPath(params.bg_lst, checkIfExists: true)
-    //.ifEmpty { exit 1, "no bg list found: ${params.lst}" }
-    //.splitCsv(header:true, sep:"\t")
-    //.map { row -> [ row.lid, file("${params.bg_lstdir}/${row.lid}.txt", checkIfExists:true) ]}
   ml_cfg = Channel.fromPath("${params.ml_dir}/${params.ml_tag}.cfg.tsv", checkIfExists: true)
     .ifEmpty { exit 1, "no ML training config found: ${params.ml_tag}" }
     .splitCsv(header:true, sep:"\t")
     .map { row -> [ row.did, row.bin, row.epi, row.nfea, row.mod,
-      file("${params.ml_seqdb_dir}/${row.gt}/02.fas", checkIfExists:true),
-      file("${params.ml_module_dir}/${row.gt}/${row.bnid}.tsv", checkIfExists:true),
-      file("${params.ml_best_mtf_dir}/${row.bnid}.tsv", checkIfExists:true),
-      file("${params.ml_seqdb_dir}/${row.gt}/05.umr.bed", checkIfExists:true)
+      file("${params.ml_dir}/05_gene_lists/${row.tid}.tsv", checkIfExists:true),
+      file("${params.ml_dir}/03_motif_lists/${row.cid}.tsv", checkIfExists:true)
       ]}
 
 
@@ -48,7 +38,7 @@ log.info show_header(sum)
 workflow {
   main:
     //mmk(seqdb, mtfs, mtf, fimo_bg)
-    dm(dm_lst_pairs)
+    dm(dm_cfg)
     //ml(ml_cfg)
   //publish:
     //mmk.out.fimo to: "${params.outdir}/11_fimo_raw", mode:'copy', overwrite: true

@@ -235,7 +235,7 @@ def revcomp(dna):
 def callvnt(args):
     qrydb = Fasta(args.qry)
     tgtdb = Fasta(args.tgt)
-    fhv = open(args.vnt, 'w')
+    fho = open(args.fo, 'w')
     for line in must_open(args.fi):
         line = line.rstrip("\n")
         if not line:
@@ -256,11 +256,11 @@ def callvnt(args):
                 if qnt != 'N' and tnt != 'N' and qnt != tnt:
                     tPos = tStart + i
                     qPos = qEnd - i - 1 if srd == '-' else qStart + i
-                    fhv.write("\t".join([tName, str(tPos), str(tPos+1), srd,
+                    fho.write("\t".join([tName, str(tPos), str(tPos+1), srd,
                         qName, str(qPos), str(qPos+1), cid, 'snp',
                         tnt, qnt])+"\n")
                     n_snp += 1
-            print("\t".join(ps[:8] + [str(n_snp)]))
+            #print("\t".join(ps[:8] + [str(n_snp)]))
         elif opt == 'indel':
             if tEnd - tStart > args.maxsize:
                 tseq = "<%d>" % (tEnd-tStart+2)
@@ -271,10 +271,10 @@ def callvnt(args):
             else:
                 qseq = qrydb[qName][qStart-1:qEnd+1].seq.upper()
                 if srd == '-': qseq = revcomp(qseq)
-            fhv.write("\t".join(ps[:8] + ['indel', tseq, qseq])+"\n")
+            fho.write("\t".join(ps[:8] + ['indel', tseq, qseq])+"\n")
         else:
             print('unknown type: %s' % opt)
-    fhv.close()
+    fho.close()
 
 def wgc2vcf(args):
     fo1, fo2 = args.tvcf, args.qvcf
@@ -354,9 +354,9 @@ if __name__ == "__main__":
     sp1 = sp.add_parser("callvnt", help = "variant calling using paired aln itvs in BED",
             formatter_class = argparse.ArgumentDefaultsHelpFormatter)
     sp1.add_argument('fi', help = 'input (9-col) BED containing paired intervals')
-    sp1.add_argument('tgt', help = 'tgt reference fasta')
-    sp1.add_argument('qry', help = 'qry reference fasta')
-    sp1.add_argument('--vnt', default='vnt.bed', help = 'output variant BED file')
+    sp1.add_argument('fo', help = 'output variant BED file')
+    sp1.add_argument('--tgt', default='t.fas', help = 'tgt reference fasta')
+    sp1.add_argument('--qry', default='q.fas', help = 'qry reference fasta')
     sp1.add_argument('--maxsize', default=100, help = 'maximum InDel size to write actual sequence')
     sp1.set_defaults(func = callvnt)
 

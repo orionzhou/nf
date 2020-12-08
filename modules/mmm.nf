@@ -80,18 +80,50 @@ process meme {
   """
 }
 
+process getfasta1 {
+  label 'low_memory'
+  tag "$lid"
+
+  input:
+  tuple val(lid), val(bin), val(epi), path(fg)
+
+  output:
+  tuple val(lid), path("${lid}.fas") optional true
+
+  script:
+  """
+  $baseDir/bin/kmer.py getfasta --bin '$bin' --epi $epi $fg ${lid}.fas
+  """
+}
+process getfasta2 {
+  label 'low_memory'
+  tag "$lid"
+
+  input:
+  tuple val(lid), val(bin), val(epi), path(fg)
+
+  output:
+  tuple val(lid), path("${lid}.fas") optional true
+
+  script:
+  """
+  $baseDir/bin/kmer.py getfasta --bin '$bin' --epi $epi $fg ${lid}.fas
+  """
+}
+
 process dreme {
   label 'low_memory'
   tag "$id"
-  publishDir "${params.dm_out}/${params.dm_tag}", mode:'copy', overwrite: true,
+  publishDir "${params.dm_dir}/${params.dm_tag}", mode:'copy', overwrite: true,
     saveAs: { fn ->
-      if (fn.indexOf(".dreme") > 0) "motifs/$fn"
-      else if (fn.indexOf(".tsv") > 0) "kmers/${fn.replaceAll('.sum','')}"
+      if (fn.indexOf(".dreme") > 0) "21_motifs/$fn"
+      else if (fn.indexOf(".meme") > 0) "21_motifs/$fn"
+      else if (fn.indexOf(".tsv") > 0) "21_kmers/${fn.replaceAll('.sum','')}"
       else null
     }
 
   input:
-  tuple val(id), path(seq), path(cseq)
+  tuple val(id), val(ctrl), path(seq), path(cseq)
 
   output:
   tuple val(id), path("${id}.dreme"), path("${id}.tsv")
@@ -99,15 +131,19 @@ process dreme {
   script:
   mink = 6
   maxk = 13
-  pval = 1e-4
-  runtime = 180000
+  minw = 8
+  maxw = 20
+  pval = 1e-2
   runtime = 324000
+  runtime = 180000
   //fimo --bfile --motif-- --thresh $pval2 ${id}.dreme $seq || (mkdir fimo_out; touch fimo_out/fimo.tsv)
   //mv fimo_out/fimo.tsv ${id}.tsv
+  //dreme -p $seq -n $cseq -dna -e $pval -t $runtime -mink $mink -maxk $maxk -oc out
+  //mv out/dreme.txt ${id}.dreme
   """
-  dreme -p $seq -n $cseq -dna -e $pval -t $runtime -mink $mink -maxk $maxk -oc out
-  mv out/dreme.txt ${id}.dreme
-  dreme.py 2tsv ${id}.dreme >${id}.tsv
+  streme --p $seq --n $cseq --dna --pvt $pval --time $runtime -minw $minw -maxw $maxw -oc out
+  mv out/streme.txt ${id}.dreme
+  dreme.py 2tsv ${id}.dreme ${id}.tsv
   """
 }
 
@@ -132,7 +168,14 @@ process mg_fimo {
 process mg_dreme {
   label 'medium_memory'
   //conda "$NXF_CONDA_CACHEDIR/r"
-  publishDir "${params.dm_out}/${params.dm_tag}", mode:'copy', overwrite: true
+  publishDir "${params.dm_dir}/${params.dm_tag}", mode:'copy', overwrite: true,
+    saveAs: { fn ->
+      if (fn.indexOf("dreme.rds") >= 0) "23.dreme.rds"
+      else if (fn.indexOf("dreme.meme") >= 0) "23.dreme.meme"
+      else if (fn.indexOf("kmer.tsv") >= 0) "23.kmer.tsv"
+      else if (fn.indexOf("kmer.motif.tsv") >= 0) "23.kmer.motif.tsv"
+      else null
+    }
 
   input:
   path(f_mtfs)
@@ -164,9 +207,23 @@ workflow mmk {
 
 workflow dm {
   take:
-    dm_lst_pairs
+    dm_cfg
   main:
-    dm_lst_pairs | dreme
+    // setup channels
+      qrys = dm_cfg.map{r -> [r.lid, r.bin, r.epi,
+        file("${params.dm_dir}/${params.dm_tag}/02_gene_lists/${r.cid}.txt", checkIfExists:true)
+      ]}.unique()
+      tgts = dm_cfg.map{r -> [r.clid, r.bin, r.epi,
+        file("${params.dm_dir}/${params.dm_tag}/02_gene_lists/${r.ccid}.txt", checkIfExists:true)
+      ]}.unique()
+    qrys | getfasta1
+    tgts | getfasta2
+    dreme_in = dm_cfg
+      .map {r -> [r.lid, r.clid]}
+      .combine(getfasta1.out, by:0)
+      .combine(getfasta2.out.map {r -> [r[1], r[0]]}, by:1)
+      .map {r -> [r[1],r[0],r[2],r[3]]}
+    dreme_in | dreme
     mg_dreme(dreme.out.collect({it[1]}), dreme.out.collect({it[2]}))
   emit:
     dreme = dreme.out
@@ -179,24 +236,19 @@ process ml1 {
   tag "${id}"
 
   input:
-  tuple val(id), val(bin), val(epi), val(nfea), val(mod), path(db), path("module.tsv"), path("mtf.tsv"), path(umr)
+  tuple val(id), val(bin), val(epi), val(nfea), val(mod), path("module.tsv"), path("mtf.tsv")
 
   output:
   tuple val(id), path("${id}.tsv")
 
   script:
   """
-  $baseDir/bin/kmer.py prepare_ml --bin '$bin' --epi $epi --nfea $nfea --mod $mod --umr $umr $db module.tsv mtf.tsv ${id}.tsv
+  $baseDir/bin/kmer.py prepare_ml --bin '$bin' --epi $epi --nfea $nfea --mod $mod module.tsv mtf.tsv ${id}.tsv
   """
 }
 
 process ml2 {
   label 'medium_memory'
-  publishDir "${params.outdir}", mode:'copy', overwrite: true,
-    saveAs: { fn ->
-      if (fn.indexOf(".rds") > 0) "42_ml/$fn"
-      else null
-    }
   tag "${id}"
 
   input:
@@ -211,13 +263,12 @@ process ml2 {
   nlevel = 4
   perm = 10
   """
-  ml_classification.R --perm $perm --alg $alg --fold $fold --nlevel $nlevel --downsample --seed $perm --cpu ${task.cpus} $fi ${id}.rds
+  $baseDir/bin/mmm/ml_classification.R --perm $perm --alg $alg --fold $fold --nlevel $nlevel --downsample --seed $perm --cpu ${task.cpus} $fi ${id}.rds
   """
 }
 
 process mg_ml {
   label 'high_memory'
-  publishDir "${params.outdir}", mode:'copy', overwrite: true
   publishDir "${params.ml_dir}", mode:'copy', overwrite: true,
     saveAs: { fn ->
       if (fn.indexOf(".rds") > 0) "${params.ml_tag}.rds"

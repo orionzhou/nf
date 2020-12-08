@@ -65,6 +65,9 @@ def main(args):
             jd1['tx2gene'] = "%s/21_dbs/salmon/tx2gene.csv" % pre
         if gl['rcfg'][i]:
             jd1['rcfg'] = "%s/55.rds" % pre
+        if gl['blast'][i]:
+            jd1['blastp'] = f"{pre}/21_dbs/blastp"
+            jd1['blastn'] = f"{pre}/21_dbs/blastn"
         win11 = "%s/15_intervals/20.win11.tsv" % pre
         win56 = "%s/15_intervals/20.win56.tsv" % pre
         win127 = "%s/15_intervals/20.win127.tsv" % pre
