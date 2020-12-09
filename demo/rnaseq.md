@@ -44,10 +44,15 @@ Log out and log in again (or run `source ~/.bashrc`) to make these variables int
 Copy the test pipeline (`nf/demo/rnaseq`) to wherever you'd like to take a try:
 
     cp -rf /home/springer/zhoux379/git/nf/demo/rnaseq /home/springer/zhoux379/rnaseq_test
-    cd /home/springer/zhoux379/rnaseq_test
+    cd ~/rnaseq_test
     ls
     # genomes.yml  nextflow.config  reads.tsv  reads.xlsx
 
-Make necessary changes to `reads.tsv` and `nextflow.config`, as well as the genome index configuration file (`genomes.yml`), then we can run the test pipeline using existing genome database on MSI-mesabi queue:
+Make necessary changes to:
+- `reads.tsv` which contains paths to your fastq sequences
+- `nextflow.config`: in particular, `launchDir=XXX` and `email_on_fail=zhoux379@umn.edu` (I don't want to receive your failed pipeline notifications!)
+- as well as the genome index configuration file `genomes.yml`
+
+Finally, (inside this directory) we are set to run the test pipeline using existing genome database on MSI-mesabi queue:
 
     nextflow run $NXF_HOME/rnaseq -params-file genomes.yml -profile mangi
