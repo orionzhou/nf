@@ -33,7 +33,7 @@ Add these environmental variables (with necessary modification) to your `~/.bash
     export NXF_HOME=/home/springer/zhoux379/git/nf
     export NXF_CACHE=/scratch.global/zhoux379/nf
     export NXF_EXECUTOR=slurm
-    export NXF_CONDA_CACHEDIR=/home/springer/zhoux379/miniconda3/envs
+    export NXF_CONDA_CACHEDIR=/home/springer/zhoux379/software/miniconda3/envs
     export NXF_WORK=$NXF_CACHE/work
     export NXF_TEMP=$NXF_CACHE/tmp
     export NXF_SINGULARITY_CACHEDIR=$NXF_CACHE/singularity

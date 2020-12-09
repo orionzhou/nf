@@ -291,7 +291,7 @@ workflow fq {
     if (params.trimmer == "no") {
       trim_reads = fqu.out
     } else if (params.trimmer == 'trim_galore'){
-      fqu | trim_galore
+      fqu.out | trim_galore
       trim_read = trim_galore.out.reads
       trim_log = trim_galore.out.log
       trim_fqc = trim_galore.out.fastqc_zip
