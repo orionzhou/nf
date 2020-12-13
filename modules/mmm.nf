@@ -16,29 +16,6 @@ process seqret {
   """
 }
 
-process fimo_old {
-  label 'low_memory'
-  tag "$id"
-
-  input:
-  tuple val(id), path(seq), path(mtf), path(bg)
-
-  output:
-  tuple val(id), path("${id}.raw.tsv"), emit: raw
-  tuple val(id), path("${id}.sum.tsv"), emit: sum
-
-  script:
-  """
-  fimo --skip-matched-sequence --text --bfile $bg $mtf $seq > ${id}.raw.tsv
-  grep ^M ${id}.raw.tsv |\
-    bioawk -tH '{if(\$7>0) {print \$1"%"\$3, \$4-1, \$5, ".", \$7, \$6}}' |\
-    sortBed | mergeBed -s -c 6,5 -o distinct,max |\
-    bioawk -tH '{split(\$1,a,/%/); print a[1], 1, 2, \$3-\$2, \$5}' |\
-    mergeBed -c 4,5 -o sum,sum |\
-    cut -f1,4,5 > ${id}.sum.tsv
-  """
-}
-
 process fimo {
   label 'low_memory'
   tag "$id"
@@ -118,7 +95,7 @@ process dreme {
     saveAs: { fn ->
       if (fn.indexOf(".dreme") > 0) "21_motifs/$fn"
       else if (fn.indexOf(".meme") > 0) "21_motifs/$fn"
-      else if (fn.indexOf(".tsv") > 0) "21_kmers/${fn.replaceAll('.sum','')}"
+      else if (fn.indexOf(".bed") > 0) "22_fimo/${fn.replaceAll('.sum','')}"
       else null
     }
 
@@ -126,7 +103,7 @@ process dreme {
   tuple val(id), val(ctrl), path(seq), path(cseq)
 
   output:
-  tuple val(id), path("${id}.dreme"), path("${id}.tsv")
+  tuple val(id), path("${id}.dreme"), path("${id}.bed")
 
   script:
   mink = 6
@@ -136,6 +113,7 @@ process dreme {
   pval = 1e-2
   runtime = 324000
   runtime = 180000
+  qval = 5e-2
   //fimo --bfile --motif-- --thresh $pval2 ${id}.dreme $seq || (mkdir fimo_out; touch fimo_out/fimo.tsv)
   //mv fimo_out/fimo.tsv ${id}.tsv
   //dreme -p $seq -n $cseq -dna -e $pval -t $runtime -mink $mink -maxk $maxk -oc out
@@ -143,7 +121,8 @@ process dreme {
   """
   streme --p $seq --n $cseq --dna --pvt $pval --time $runtime -minw $minw -maxw $maxw -oc out
   mv out/streme.txt ${id}.dreme
-  dreme.py 2tsv ${id}.dreme ${id}.tsv
+  cat $seq $cseq > merge.fas
+  fimo.py --thresh ${qval} ${id}.dreme merge.fas ${id}.bed
   """
 }
 
@@ -172,6 +151,7 @@ process mg_dreme {
     saveAs: { fn ->
       if (fn.indexOf("dreme.rds") >= 0) "23.dreme.rds"
       else if (fn.indexOf("dreme.meme") >= 0) "23.dreme.meme"
+      else if (fn.indexOf("fimo.rds") >= 0) "23.fimo.rds"
       else if (fn.indexOf("kmer.tsv") >= 0) "23.kmer.tsv"
       else if (fn.indexOf("kmer.motif.tsv") >= 0) "23.kmer.motif.tsv"
       else null
@@ -179,15 +159,15 @@ process mg_dreme {
 
   input:
   path(f_mtfs)
-  path(f_tsvs)
+  path(f_beds)
 
   output:
-  tuple path("dreme.rds"), path("kmer.tsv"), path("kmer.motif.tsv")
+  tuple path("dreme.rds"), path("fimo.rds")
 
   script:
   """
   $baseDir/bin/mmm/merge.dreme.R -o dreme.rds --meme dreme.meme --txt dreme.txt $f_mtfs
-  $baseDir/bin/mmm/merge.dreme.kmer.R --fok kmer.tsv --fom kmer.motif.tsv --fos kmer.txt $f_tsvs
+  $baseDir/bin/mmm/merge.dreme.fimo.R -o fimo.rds $f_beds
   """
 }
 

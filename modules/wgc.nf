@@ -103,18 +103,19 @@ process post {
   tuple val(qry), val(tgt), path(fi), path('q.fas'), path('q.sizes'), path('q.ref'), path('t.fas'), path('t.sizes'), path('t.ref')
 
   output:
-  tuple val(qry), val(tgt), path("aln.bed"), path("vnt.bed"), path("q.chain"), path("t.chain"), path("t.vcf.gz"), path("q.vcf.gz")
+  tuple val(qry), val(tgt), path("aln.bed"), path("vnt.bed"), path("q.chain"), path("t.chain"), path("t.vcf.gz"), path("q.vcf.gz"), path("t.vcf.gz.csi"), path("q.vcf.gz.csi")
 
   script:
   min_aln_size=50000
   min_qry_size=50000
   min_tgt_size=50000
+  max_indel_size=params.max_indel_size
   """
   chainStitchId $fi 01.stitched.chain
   chainFilter -minGapless=1000 01.stitched.chain > 02.filtered.chain
   chain.py 2bed 02.filtered.chain > 02.bed
   $baseDir/bin/wgc/chainBedVnt.R 02.bed 05.itv.bed
-  $baseDir/bin/wgc/wgc.py callvnt 05.itv.bed 05.vnt.bed --tgt t.fas --qry q.fas
+  $baseDir/bin/wgc/wgc.py callvnt 05.itv.bed 05.vnt.bed --tgt t.fas --qry q.fas --maxsize ${max_indel_size}
   $baseDir/bin/wgc/chainBedFilter.R --minsize ${min_aln_size} 02.bed aln.bed 05.vnt.bed vnt.bed
   chain.py fromBed aln.bed t.sizes q.sizes > t.chain
   chainSwap t.chain q.chain
@@ -124,7 +125,9 @@ process post {
   gatk UpdateVCFSequenceDictionary -V t.1.s.vcf -R t.ref/db.fasta -O t.2.vcf
   gatk UpdateVCFSequenceDictionary -V q.1.s.vcf -R q.ref/db.fasta -O q.2.vcf
   bcftools norm -f t.fas -c w -d all t.2.vcf -Ou | bcftools sort -Oz -o t.vcf.gz
+  bcftools index -c t.vcf.gz
   bcftools norm -f q.fas -c w -d all q.2.vcf -Ou | bcftools sort -Oz -o q.vcf.gz
+  bcftools index -c q.vcf.gz
   """
 }
 

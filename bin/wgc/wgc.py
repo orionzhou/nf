@@ -276,7 +276,7 @@ def callvnt(args):
             print('unknown type: %s' % opt)
     fho.close()
 
-def wgc2vcf(args):
+def bed2vcf(args):
     fo1, fo2 = args.tvcf, args.qvcf
     qry, tgt = args.qry, args.tgt
     fho1 = open(fo1, 'w')
@@ -357,7 +357,7 @@ if __name__ == "__main__":
     sp1.add_argument('fo', help = 'output variant BED file')
     sp1.add_argument('--tgt', default='t.fas', help = 'tgt reference fasta')
     sp1.add_argument('--qry', default='q.fas', help = 'qry reference fasta')
-    sp1.add_argument('--maxsize', default=100, help = 'maximum InDel size to write actual sequence')
+    sp1.add_argument('--maxsize', type=int, default=100, help = 'maximum InDel size to write actual sequence')
     sp1.set_defaults(func = callvnt)
 
     sp1 = sp.add_parser("bed2vcf",
@@ -368,7 +368,7 @@ if __name__ == "__main__":
     sp1.add_argument('qvcf', help = 'output qry vcf')
     sp1.add_argument('--tgt', default = 'tgt', help = 'sample name for tgt')
     sp1.add_argument('--qry', default = 'qry', help = 'sample name for qry')
-    sp1.set_defaults(func = wgc2vcf)
+    sp1.set_defaults(func = bed2vcf)
 
     sp1 = sp.add_parser("parseEff", help = "parse snpEff output")
     sp1.add_argument('fi', help = 'input vcf file (snpEff output)')
