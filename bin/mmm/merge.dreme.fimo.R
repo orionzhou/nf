@@ -67,7 +67,8 @@ to = ti %>%
     mutate(x = map(fi, read_fimo_py)) %>% select(-fi) %>%
     unnest(x) %>%
     mutate(mid = str_c(lid,mid,sep='_')) %>%
-    group_by(lid, mid) %>% nest() %>% rename(loc=data)
+    group_by(lid, mid) %>% nest() %>% ungroup() %>%
+    rename(loc=data)
 
 saveRDS(to, fo)
 

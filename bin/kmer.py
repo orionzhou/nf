@@ -8,7 +8,6 @@ import logging
 import re
 
 from pyfaidx import Fasta, Sequence
-#from scipy.stats import fisher_exact
 import pybedtools
 
 def locate(args):
@@ -276,7 +275,7 @@ if __name__ == "__main__":
     sp1.add_argument('gene', help = 'gene status table')
     sp1.add_argument('kmer', help = 'kmer table')
     sp1.add_argument('out', help = 'output file (*.tsv)')
-    sp1.add_argument('--bin', default='+/-2k', help = 'window option')
+    sp1.add_argument('--bin', default='TSS:-/+2k', help = 'window option')
     sp1.add_argument('--epi', default='raw', choices=['raw','umr','acrE','acrL'], help = 'epigenetic filter')
     sp1.add_argument('--nfea', default='top30', choices=nfeas, help = 'number features/motifs to use')
     sp1.add_argument('--mod', default='zoops', choices=['zoops','anr'], help = 'encoding option')

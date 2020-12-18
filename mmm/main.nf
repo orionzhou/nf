@@ -26,7 +26,7 @@ prep_params(params, workflow)
     .splitCsv(header:true, sep:"\t")
     .map { row -> [ row.did, row.bin, row.epi, row.nfea, row.mod,
       file("${params.ml_dir}/05_gene_lists/${row.tid}.tsv", checkIfExists:true),
-      file("${params.ml_dir}/03_motif_lists/${row.cid}.tsv", checkIfExists:true)
+      file("${params.ml_dir}/03_motif_lists/${row.bid}.meme", checkIfExists:true)
       ]}
 
 
@@ -38,8 +38,8 @@ log.info show_header(sum)
 workflow {
   main:
     //mmk(seqdb, mtfs, mtf, fimo_bg)
-    dm(dm_cfg)
-    //ml(ml_cfg)
+    //dm(dm_cfg)
+    ml(ml_cfg)
   //publish:
     //mmk.out.fimo to: "${params.outdir}/11_fimo_raw", mode:'copy', overwrite: true
     //mmk.out.fimo2 to: "${params.outdir}/12_fimo_sum", mode:'copy', overwrite: true

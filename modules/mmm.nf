@@ -60,6 +60,7 @@ process meme {
 process getfasta1 {
   label 'low_memory'
   tag "$lid"
+  publishDir "${params.dm_dir}/${params.dm_tag}/20_seqs", mode:'copy'
 
   input:
   tuple val(lid), val(bin), val(epi), path(fg)
@@ -75,6 +76,7 @@ process getfasta1 {
 process getfasta2 {
   label 'low_memory'
   tag "$lid"
+  publishDir "${params.dm_dir}/${params.dm_tag}/20_seqs", mode:'copy'
 
   input:
   tuple val(lid), val(bin), val(epi), path(fg)
@@ -85,6 +87,26 @@ process getfasta2 {
   script:
   """
   $baseDir/bin/kmer.py getfasta --bin '$bin' --epi $epi $fg ${lid}.fas
+  """
+}
+
+process nseq {
+  label 'low_memory'
+  publishDir "${params.dm_dir}/${params.dm_tag}", mode:'copy',
+    saveAs: { fn ->
+      if (fn.indexOf("nseq.txt") >= 0) "20.nseq.txt"
+      else null
+    }
+
+  input:
+  path(seqs)
+
+  output:
+  path("nseq.txt")
+
+  script:
+  """
+  grep -c '>' $seqs > nseq.txt
   """
 }
 
@@ -198,6 +220,7 @@ workflow dm {
       ]}.unique()
     qrys | getfasta1
     tgts | getfasta2
+    getfasta1.out.concat(getfasta2.out).collect({it[1]}) | nseq
     dreme_in = dm_cfg
       .map {r -> [r.lid, r.clid]}
       .combine(getfasta1.out, by:0)
@@ -212,23 +235,25 @@ workflow dm {
 
 process ml1 {
   label 'low_memory'
-  publishDir "${params.outdir}/41_ml_input", mode:'copy', overwrite: true
+  publishDir "${params.ml_dir}/${params.ml_tag}/41_ml_in", mode:'copy', overwrite: true
   tag "${id}"
 
   input:
-  tuple val(id), val(bin), val(epi), val(nfea), val(mod), path("module.tsv"), path("mtf.tsv")
+  tuple val(id), val(bin), val(epi), val(nfea), val(mod), path("module.tsv"), path("mtfs.meme")
 
   output:
   tuple val(id), path("${id}.tsv")
 
   script:
+  //$baseDir/bin/kmer.py prepare_ml --bin '$bin' --epi $epi --nfea $nfea --mod $mod module.tsv mtf.tsv ${id}.tsv
   """
-  $baseDir/bin/kmer.py prepare_ml --bin '$bin' --epi $epi --nfea $nfea --mod $mod module.tsv mtf.tsv ${id}.tsv
+  $baseDir/bin/mmm/fimo.py prepare_ml --bin '$bin' --epi $epi --nfea $nfea --mod $mod --fmt wide module.tsv mtfs.meme ${id}.tsv
   """
 }
 
 process ml2 {
   label 'medium_memory'
+  publishDir "${params.ml_dir}/${params.ml_tag}/42_ml_out", mode:'copy', overwrite: true
   tag "${id}"
 
   input:
@@ -239,9 +264,9 @@ process ml2 {
 
   script:
   alg = 'rf'
-  fold = 10
-  nlevel = 4
-  perm = 10
+  fold = 5
+  nlevel = 3
+  perm = 20
   """
   $baseDir/bin/mmm/ml_classification.R --perm $perm --alg $alg --fold $fold --nlevel $nlevel --downsample --seed $perm --cpu ${task.cpus} $fi ${id}.rds
   """

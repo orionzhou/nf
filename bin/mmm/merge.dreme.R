@@ -84,7 +84,9 @@ to1 = ti %>%
     mutate(motif = map(dreme, read_meme0)) %>%
     select(lid, motif) %>% unnest(motif) %>%
     mutate(mid = map_chr(motif, 'altname')) %>%
-    mutate(mid = sprintf("%s_%03d", lid, as.integer(str_replace_all(mid,'.*REME-','')))) %>%
+    separate('mid', c('pre','mid'), sep='-') %>%
+    #mutate(mid = sprintf("%s_%03d", lid, as.integer(str_replace_all(mid,'.*REME-','')))) %>%
+    mutate(mid = str_c(lid,mid,sep='_')) %>%
     mutate(mtf = map2(motif, mid, rename_motif)) %>%
     select(lid, mid, mtf)
 
