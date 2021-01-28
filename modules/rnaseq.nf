@@ -305,6 +305,25 @@ process salm {
   """
 }
 
+process bigwig {
+  label 'mid_memory'
+  tag "$id"
+  publishDir "${params.outdir}/23_bigwig", mode:'copy', overwrite:'true'
+
+  input:
+  tuple val(id), path(bam), path(bai)
+
+  output:
+  tuple val(id), path("${id}.bw")
+
+  script:
+  binsize = 50
+  //--effectiveGenomeSize ${egs} 
+  """
+  bamCoverage --binSize ${binsize} -p ${task.cpus} -b $bam -o ${id}.bw
+  """
+}
+
 process vnt1 {
   label "process_medium"
   tag "${params.name}.$rid"
@@ -360,6 +379,7 @@ workflow rnaseq {
     reads
     design
   main:
+    genome_sizes = Channel.fromPath(params.genome_sizes, checkIfExists: true)
     gtf = Channel.fromPath(params.gtf, checkIfExists: true)
        .ifEmpty { exit 1, "GTF annotation file not found: ${params.gtf}" }
     bed = Channel
@@ -449,6 +469,9 @@ workflow rnaseq {
       cage1(bams)
       bigwigs = cage1.out
       cage2(bigwigs.collect({[it[1],it[2]]}).flatten().toSortedList(),  pbed)
+    } else {
+      bigwig(bams)
+      bigwigs = bigwig.out
     }
 
     vnt_vcf = Channel.empty()

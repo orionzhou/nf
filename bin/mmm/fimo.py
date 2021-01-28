@@ -6,8 +6,8 @@ import os.path as op
 import sys
 import random
 
-from jcvi.apps.base import sh, mkdir
-from jcvi.formats.base import read_block
+from jcvi.apps.base import sh, popen, mkdir
+from jcvi.formats.base import read_block, is_number, get_number
 
 off = 4050
 range_dict = {
@@ -41,10 +41,16 @@ def read_meme(fi):
     mtfs = []
     fhi = open(fi, 'r')
     for head,content in read_block(fhi, 'MOTIF'):
-        pre, mid, mid2 = head.split(' ')
+        ps = head.split(' ')
+        pre, mid = ps[:2]
+        score = ''
+        if len(ps) >= 3:
+            score = ps[2]
         #mtf = mid.split("-")[1]
+        if is_number(score):
+            score = float(score)
         width = len(content)-2
-        mtfs.append([mid,width])
+        mtfs.append([mid,width,score])
         #print(mid,'\t',width)
     return mtfs
 
@@ -67,7 +73,7 @@ def read_motif(fm, mtf_str):
         mtfs = mtfs0[:n]
     else:
         mids = set(mtf_str.split(","))
-        mtfs = [ [x,wd] for x,wd in mtfs0 if x in mids ]
+        mtfs = [ [x,wd,score] for x,wd,score in mtfs0 if x in mids ]
     if len(mtfs) == 0:
         print(f"zero motifs found in {fm}")
         sys.exit(1)
@@ -89,13 +95,21 @@ def locate(args):
     fi, fo = args.fi, args.fo
     seq = args.seq
     mtfs = read_motif(fi, args.motif)
+    #
+    mtf_str = " ".join([f'--motif {mid}' for mid,wd,score in mtfs])
     pre = f"tmp.lc{random.randrange(1000)}"
-    for mid,wd in mtfs:
-        sh(f'fimo --motif {mid} --thresh {args.thresh} --oc fimo {fi} {seq}')
-        cmd = (f'grep \'^{mid}\' fimo/fimo.tsv | '
-            'bioawk -tH \'{if($9<0.05) {print $1"%"$3, $4-1, $5}}\' > zzzz.bed')
-        sh(cmd)
-        sh(f"mv zzzz.bed {pre}_1.bed")
+    #
+    sh(f'fimo --bfile --motif-- {mtf_str} --thresh 1e-4 --skip-matched-sequence --text {fi} {seq} > {pre}_0.txt')
+    for mid,wd,score in mtfs:
+        sh(f'grep -P "^{mid}\t" {pre}_0.txt > {pre}_0a.txt')
+        #
+        score_thresh = score
+        if not score:
+            xh = popen(f'cut -f7 {pre}_0a.txt | sed \'1d\' | sort -k1,1nr | head')
+            max_score = float(xh.readline().decode("utf-8").strip())
+            score_thresh = max_score * args.score_thresh
+        #
+        sh("bioawk -tH '{if($7>%f) {print $1\"%%\"$3, $4-1, $5}}' %s_0a.txt > %s_1.bed" % (score_thresh, pre, pre))
         hwd = round(wd * args.motif_frac)
         if os.stat(f"{pre}_1.bed").st_size == 0:
             sh(f'touch {pre}_4_{mid}.bed')
@@ -104,7 +118,8 @@ def locate(args):
             sh(f'bedtools makewindows -w {wd} -b {pre}_2.bed > {pre}_3.bed')
             sh(f'bed.py filter --minsize {hwd} {pre}_3.bed > {pre}_4_{mid}.bed')
     sh(f'cat {pre}_4_*.bed > {fo}')
-    sh(f'rm -rf fimo {pre}_*')
+    if not args.debug:
+        sh(f'rm -rf {pre}_*')
 
 def filter(args):
     fi, fg, fo = args.fi, args.fg, args.fo
@@ -150,11 +165,11 @@ def bed2wide(args):
         mc[gid][mid] += 1
     #
     fho = open(fo,'w')
-    mid_str = "\t".join([x for x,wd in mtfs])
+    mid_str = "\t".join([x for x,wd,score in mtfs])
     fho.write(f"gid\tstatus\t{mid_str}\n")
     for gid,status in glst:
         lstr = f"{gid}\t{status}"
-        for mid,wd in mtfs:
+        for mid,wd,score in mtfs:
             if gid not in mc or mid not in mc[gid]:
                 lstr += "\t0"
             else:
@@ -171,16 +186,16 @@ def prepare_ml(args):
     pre = f"tmp.pm{random.randrange(1000)}"
     sh(f"sed '1d' {fg} |cut -f1 > {pre}_0.txt")
     sh(f"fasta.py extract --list {db} {pre}_0.txt > {pre}_1.fas")
-    sh(f"fimo.py locate --motif {nfea} {fm} --thresh {args.thresh} --motif_frac {args.motif_frac} {pre}_1.fas {pre}_2.bed")
-    sh(f'mv {pre}_2.bed z0.bed')
-    sh("bioawk -t '{split($1,a,/%/); print a[2], $2, $3, a[1]}' z0.bed | sort -k1,1 -k2,2n -k3,3n > z.bed")
-    sh(f'mv z.bed {pre}_3.bed')
+    debug = '--debug' if args.debug else ''
+    sh(f"fimo.py locate {debug} --motif {nfea} {fm} --score_thresh {args.score_thresh} --motif_frac {args.motif_frac} {pre}_1.fas {pre}_2.bed")
+    sh("bioawk -t '{split($1,a,/%%/); print a[2], $2, $3, a[1]}' %s_2.bed | sort -k1,1 -k2,2n -k3,3n > %s_3.bed" % (pre, pre))
     sh(f"fimo.py filter {pre}_3.bed --bin '{bin}' --epi {epi} {fg} {pre}_4.bed")
     if fmt == 'long':
         sh(f"cp {pre}_4.bed {fo}")
     else:
         sh(f"fimo.py bed2wide --mod {mod} --motif {fm} --nfea {nfea} {fg} {pre}_4.bed {fo}")
-    sh(f"rm {pre}_* z0.bed")
+    if not args.debug:
+        sh(f"rm {pre}_*")
 
 if __name__ == "__main__":
     import argparse
@@ -197,8 +212,9 @@ if __name__ == "__main__":
     sp1.add_argument('seq', help = 'sequence file')
     sp1.add_argument('fo', help = 'output file')
     sp1.add_argument('--motif', default='all', help = 'motif ID / option')
-    sp1.add_argument('--thresh', type=float, default=0.05, help = 'q value threshold')
+    sp1.add_argument('--score_thresh', type=float, default=0.7, help = 'minimum (relative) score threshold')
     sp1.add_argument('--motif_frac', type=float, default=0.8, help = 'fraction of motif to be counted')
+    sp1.add_argument('--debug', action='store_true', help = 'do not delete temporary files')
     sp1.set_defaults(func = locate)
 
     sp1 = sp.add_parser("filter",
@@ -239,9 +255,10 @@ if __name__ == "__main__":
     sp1.add_argument('--umr', default='/home/springer/zhoux379/projects/stress/data/21_seq/15.umr.bed', help = 'UMR bed file')
     sp1.add_argument('--acrE', default='/home/springer/zhoux379/projects/stress/data/21_seq/15.acrE.bed', help = 'acrE bed file')
     sp1.add_argument('--acrL', default='/home/springer/zhoux379/projects/stress/data/21_seq/15.acrL.bed', help = 'acrL bed file')
-    sp1.add_argument('--thresh', type=float, default=0.05, help = 'q value threshold')
+    sp1.add_argument('--score_thresh', type=float, default=0.7, help = 'minimum (relative) fimo score threshold')
     sp1.add_argument('--motif_frac', type=float, default=0.8, help = 'fraction of motif to be counted')
     sp1.add_argument('--fmt', default='wide', choices=['long','wide'], help = 'output format')
+    sp1.add_argument('--debug', action='store_true', help = 'do not delete temporary files')
     sp1.set_defaults(func = prepare_ml)
 
     args = ps.parse_args()

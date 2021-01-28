@@ -196,6 +196,10 @@ process bigwig {
   prefix = "${id}"
   pe_fragment = params.single_end ? "" : "-pc"
   extend = (params.single_end && params.fragment_size > 0) ? "-fs ${params.fragment_size}" : ''
+  //bamCoverage --bam a.bam -o a.SeqDepthNorm.bw \
+    //--binSize 10
+    //--normalizeUsing RPGC
+    //--effectiveGenomeSize 2150570000
   """
   SCALE_FACTOR=\$(grep 'mapped (' $flagstat | awk '{print 1000000/\$1}')
   echo \$SCALE_FACTOR > ${prefix}.scale_factor.txt

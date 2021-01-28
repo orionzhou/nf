@@ -43,14 +43,12 @@ read_meme0 <- function(fi) {
 }
 rename_motif <- function(mtf, mid) {
     #{{{
-    mtf['altname'] = mtf['name']
+    #mtf['altname'] = mtf['name']
     mtf['name'] = mid
     mtf
     #}}}
 }
 
-#fi = '/home/springer/zhoux379/projects/stress/nf/raw/22b_dreme_fimo/l0421.tsv'
-#fi = '/home/springer/zhoux379/projects/stress/nf/raw/11_fimo/M08424_2.00.tsv'
 read_fimo <- function(fi) {
     #{{{
     ti = read_tsv(fi)
@@ -83,8 +81,8 @@ read_fimo <- function(fi) {
 to1 = ti %>%
     mutate(motif = map(dreme, read_meme0)) %>%
     select(lid, motif) %>% unnest(motif) %>%
-    mutate(mid = map_chr(motif, 'altname')) %>%
-    separate('mid', c('pre','mid'), sep='-') %>%
+    mutate(mid = map_chr(motif, 'name')) %>%
+    separate('mid', c('mid','seq'), sep='-') %>%
     #mutate(mid = sprintf("%s_%03d", lid, as.integer(str_replace_all(mid,'.*REME-','')))) %>%
     mutate(mid = str_c(lid,mid,sep='_')) %>%
     mutate(mtf = map2(motif, mid, rename_motif)) %>%

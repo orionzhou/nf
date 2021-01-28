@@ -41,7 +41,8 @@ gene.desc = read_tsv(fi)
 
 gene.size.rna = gene.loc %>%
     group_by(gid, tid) %>%
-    summarise(ttype = ttype[1], chrom=chrom[1], start = min(start), end = max(end),
+    summarise(ttype = ttype[1], chrom=chrom[1],
+              start = min(start), end = max(end), srd = srd[1],
               size.rna = end-start+1) %>% ungroup()
 gene.size.exon = gene.loc %>% filter(etype == 'exon') %>%
     group_by(gid, tid) %>%

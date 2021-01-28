@@ -113,38 +113,55 @@ process nseq {
 process dreme {
   label 'low_memory'
   tag "$id"
-  publishDir "${params.dm_dir}/${params.dm_tag}", mode:'copy', overwrite: true,
-    saveAs: { fn ->
-      if (fn.indexOf(".dreme") > 0) "21_motifs/$fn"
-      else if (fn.indexOf(".meme") > 0) "21_motifs/$fn"
-      else if (fn.indexOf(".bed") > 0) "22_fimo/${fn.replaceAll('.sum','')}"
-      else null
-    }
+  publishDir "${params.dm_dir}/${params.dm_tag}/21_dreme_raw", mode:'copy', overwrite: true
 
   input:
   tuple val(id), val(ctrl), path(seq), path(cseq)
 
   output:
-  tuple val(id), path("${id}.dreme"), path("${id}.bed")
+  tuple val(id), path("${id}")
 
   script:
   mink = 6
   maxk = 13
-  minw = 8
+  minw = 6
   maxw = 20
   pval = 1e-2
   runtime = 324000
   runtime = 180000
-  qval = 5e-2
+  runtime = 72000
   //fimo --bfile --motif-- --thresh $pval2 ${id}.dreme $seq || (mkdir fimo_out; touch fimo_out/fimo.tsv)
   //mv fimo_out/fimo.tsv ${id}.tsv
   //dreme -p $seq -n $cseq -dna -e $pval -t $runtime -mink $mink -maxk $maxk -oc out
   //mv out/dreme.txt ${id}.dreme
   """
-  streme --p $seq --n $cseq --dna --pvt $pval --time $runtime -minw $minw -maxw $maxw -oc out
-  mv out/streme.txt ${id}.dreme
-  cat $seq $cseq > merge.fas
-  fimo.py --thresh ${qval} ${id}.dreme merge.fas ${id}.bed
+  streme --p $seq --n $cseq --dna --pvt $pval --time $runtime -minw $minw -maxw $maxw -oc $id
+  """
+}
+
+process dreme2 {
+  label 'low_memory'
+  tag "$id"
+  publishDir "${params.dm_dir}/${params.dm_tag}", mode:'copy', overwrite: true,
+    saveAs: { fn ->
+      if (fn.indexOf(".dreme") > 0) "22_motifs/$fn"
+      else if (fn.indexOf(".meme") > 0) "22_motifs/$fn"
+      else if (fn.indexOf(".bed") > 0) "22_fimo/${fn.replaceAll('.sum','')}"
+      else null
+    }
+
+  input:
+  tuple val(id), val(ctrl), path(seq), path(cseq), path("in")
+
+  output:
+  tuple val(id), path("${id}.dreme"), path("${id}.tsv"), path("${id}.bed")
+
+  script:
+  """
+  $baseDir/bin/mmm/streme.py xml2tsv in/streme.xml > ${id}.tsv
+  $baseDir/bin/mmm/streme.py addscore in/streme.txt in/streme.xml ${id}.dreme
+  cat $seq $cseq > merge1.fas
+  $baseDir/bin/mmm/fimo.py locate ${id}.dreme merge1.fas ${id}.bed
   """
 }
 
@@ -227,7 +244,8 @@ workflow dm {
       .combine(getfasta2.out.map {r -> [r[1], r[0]]}, by:1)
       .map {r -> [r[1],r[0],r[2],r[3]]}
     dreme_in | dreme
-    mg_dreme(dreme.out.collect({it[1]}), dreme.out.collect({it[2]}))
+    dreme_in.combine(dreme.out, by:0) | dreme2
+    mg_dreme(dreme2.out.collect({it[1]}), dreme2.out.collect({it[3]}))
   emit:
     dreme = dreme.out
     mg_dreme = mg_dreme.out
@@ -264,7 +282,7 @@ process ml2 {
 
   script:
   alg = 'rf'
-  fold = 5
+  fold = 10
   nlevel = 3
   perm = 20
   """
@@ -274,6 +292,7 @@ process ml2 {
 
 process mg_ml {
   label 'high_memory'
+  publishDir "${params.ml_dir}/${params.ml_tag}", mode:'copy', overwrite: true
   publishDir "${params.ml_dir}", mode:'copy', overwrite: true,
     saveAs: { fn ->
       if (fn.indexOf(".rds") > 0) "${params.ml_tag}.rds"
