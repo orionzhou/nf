@@ -1,6 +1,7 @@
 # Project directories
 cache
 logs
+capsule
 #assets
 igenomes
 singularity
