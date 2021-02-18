@@ -40,9 +40,9 @@ def main(args):
     if args.upload:
         diro = op.join(args.s3dir, args.yid)
         if dry:
-            print(f"s3.py up {args.yid}")
+            print(f"s3.py up zhoup-nfo/{args.yid}")
         else:
-            sh(f"s3.py up {args.yid}")
+            sh(f"s3.py up zhoup-nfo/{args.yid}")
 
 if __name__ == "__main__":
     import argparse
@@ -55,7 +55,7 @@ if __name__ == "__main__":
     libs = ['rnaseq','smrnaseq','chipseq','atacseq','methylseq','dnaseq']
     #ps.add_argument('--lib', default='rnaseq', choices=libs, help = 'library type')
     ps.add_argument('--nfdir', default='/home/springer/zhoux379/projects/barn/nf', help = 'nextflow launch dir')
-    ps.add_argument('--s3dir', default='/home/springer/zhoux379/projects/s3/data/zhoup-nfo', help = 's3 dir')
+    ps.add_argument('--s3dir', default='/home/springer/zhoux379/projects/s3/zhoup-nfo', help = 's3 dir')
     ps.add_argument('--dry', action='store_true', help = 'dry run')
     ps.add_argument('--upload', action='store_true', help = 'upload to amazon s3?')
 
