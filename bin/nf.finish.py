@@ -21,12 +21,28 @@ def read_samplelist(fs):
 
 def main(args):
     os.chdir(op.join(args.nfdir, args.yid))
+    dry = args.dry
     if op.islink("results"):
         print("results already a link, skip moving")
     elif op.isdir("results"):
         diro = op.join(args.s3dir, args.yid)
         if op.isdir(diro):
-            sh(f"mv {diro} {diro}.bak")
+            if dry:
+                print(f"mv {diro} {diro}.bak")
+            else:
+                sh(f"mv {diro} {diro}.bak")
+        if dry:
+            print(f"mv results {diro}")
+            print(f"ln -sf {diro} results")
+        else:
+            sh(f"mv results {diro}")
+            sh(f"ln -sf {diro} results")
+    if args.upload:
+        diro = op.join(args.s3dir, args.yid)
+        if dry:
+            print(f"s3.py up {args.yid}")
+        else:
+            sh(f"s3.py up {args.yid}")
 
 if __name__ == "__main__":
     import argparse
