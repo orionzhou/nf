@@ -53,22 +53,22 @@ process seqfmt {
   def merge_tag = id=='Mt_R108' ? '' : '--merge_short'
   """
   mv $fi raw0.fasta
-  fasta.py clean raw0.fasta > raw.fasta
-  fasta.py size $fi > raw.sizes
+  fasta.py clean raw0.fasta raw.fasta
+  fasta.py size $fi raw.sizes
 
   fasta.py rename $fi renamed.fna forward.bed reverse.bed \\
     --opt ${id} ${merge_tag} \\
     --gap ${gap.replaceAll(/\.[0-9]+$/,'')} --prefix_chr ${chr_prefix}
 
-  fasta.py size renamed.fna > renamed.sizes
-  chain.py fromBed forward.bed raw.sizes renamed.sizes > forward.chain
+  fasta.py size renamed.fna renamed.sizes
+  chain.py fromBed forward.bed raw.sizes renamed.sizes forward.chain
   chainSwap forward.chain reverse.chain
   mv renamed.fna 10.fasta
 
   samtools faidx 10.fasta
-  fasta.py size --bed 10.fasta > 01.chrom.bed
+  fasta.py size --bed 10.fasta 01.chrom.bed
   cut -f1,3 01.chrom.bed > 01.chrom.sizes
-  fasta.py gaps 10.fasta > 11.gap.bed
+  fasta.py gaps 10.fasta 11.gap.bed
   """
 }
 
