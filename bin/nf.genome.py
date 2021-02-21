@@ -24,7 +24,7 @@ def main(args):
             gl['genome'][i], gl['species'][i], gl['source'][i], gl['status'][i]
         #if not status in ['C','T']: continue
         jd1 = dict()
-        pre = "%s/data/%s" % (args.dirg, genome)
+        pre = "%s/%s" % (args.dirg, genome)
         jd1['alias'] = gl['alias'][i]
         jd1['prefix'] = gl['prefix'][i]
         jd1['fasta'] = "%s/10.fasta" % pre

@@ -98,7 +98,7 @@ workflow.onComplete {
 
   // Write summaries to a file
   // Make directory first if needed
-  def output_d = new File("${params.outdir}/pipeline_info/")
+  def output_d = new File("${params.tracedir}/")
   if (!output_d.exists()) output_d.mkdirs()
   // Replace the email logo cid with a base64 encoded image
   //def logo_b64 = new File("$baseDir/assets/nf-core-rnaseq_logo.png").bytes.encodeBase64().toString()
