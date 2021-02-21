@@ -1,10 +1,4 @@
 name: cage
-channels:
-  - pwwang
-  - conda-forge
-  - bioconda
-  - r
-  - defaults
 dependencies:
   - _libgcc_mutex=0.1
   - _openmp_mutex=4.5
@@ -40,8 +34,6 @@ dependencies:
   - bioconductor-ensembldb=2.14.0
   - bioconductor-genefilter=1.72.0
   - bioconductor-geneplotter=1.68.0
-  - bioconductor-genomeinfodb=1.26.0
-  - bioconductor-genomeinfodbdata=1.2.4
   - bioconductor-genomicalignments=1.26.0
   - bioconductor-genomicfeatures=1.42.0
   - bioconductor-genomicfiles=1.26.0
@@ -70,7 +62,6 @@ dependencies:
   - botocore=1.19.59
   - brotlipy=0.7.0
   - bwidget=1.9.14
-  - bwtool=20170428
   - bzip2=1.0.8
   - c-ares=1.17.1
   - ca-certificates=2021.1.19
@@ -142,7 +133,6 @@ dependencies:
   - krb5=1.17.2
   - lcms2=2.11
   - ld_impl_linux-64=2.35.1
-  - libbeato=20170428
   - libblas=3.8.0
   - libcblas=3.8.0
   - libclang=9.0.1
