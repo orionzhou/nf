@@ -19,7 +19,7 @@ process prep_qry {
   bed.py size 02.qry.clean.bed
   bed.py binpacking 02.qry.clean.bed 03.bed ${qry}_split --N ${params.npieces} --pre p
   cut -f1,3 03.bed > 03.sizes
-  chain.py fromBed 03.bed 03.sizes ${sizes} > ${qry}.chain
+  chain.py fromBed 03.bed 03.sizes ${sizes} ${qry}.chain
   ls ${qry}_split/*.bed | \\
     parallel -j ${task.cpus} "fasta.py extract ${fas} {} > {.}.fas"
   """

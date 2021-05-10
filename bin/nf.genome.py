@@ -94,7 +94,7 @@ if __name__ == "__main__":
 
     ps.add_argument('fi', help = 'input genome tsv')
     ps.add_argument('fo', help = 'output yaml file')
-    ps.add_argument('--dirg', default=os.environ["genome"], help='genome directory')
+    ps.add_argument('--dirg', default="%s/zhoup-genome" % os.environ["s3"], help='genome directory')
 #    ps.add_argument('--json', default='genomes.json', help = 'output json file')
 
     args = ps.parse_args()
