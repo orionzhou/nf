@@ -113,11 +113,11 @@ process post {
   """
   chainStitchId $fi 01.stitched.chain
   chainFilter -minGapless=1000 01.stitched.chain > 02.filtered.chain
-  chain.py 2bed 02.filtered.chain > 02.bed
+  chain.py 2bed 02.filtered.chain 02.bed
   $baseDir/bin/wgc/chainBedVnt.R 02.bed 05.itv.bed
   $baseDir/bin/wgc/wgc.py callvnt 05.itv.bed 05.vnt.bed --tgt t.fas --qry q.fas --maxsize ${max_indel_size}
   $baseDir/bin/wgc/chainBedFilter.R --minsize ${min_aln_size} 02.bed aln.bed 05.vnt.bed vnt.bed
-  chain.py fromBed aln.bed t.sizes q.sizes > t.chain
+  chain.py fromBed aln.bed t.sizes q.sizes t.chain
   chainSwap t.chain q.chain
   $baseDir/bin/wgc/wgc.py bed2vcf --tgt $tgt --qry $qry vnt.bed t.1.vcf q.1.vcf
   sortBed -header -i t.1.vcf > t.1.s.vcf
