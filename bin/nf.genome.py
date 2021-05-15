@@ -8,11 +8,13 @@ import pandas as pd
 #import simplejson as json
 import yaml
 
+from jcvi.apps.base import sh, mkdir
+
 def get_gsize(fs):
     cl = pd.read_csv(fs, sep="\t", header=None, names=['chrom','size'])
     return sum(cl['size'])
 
-def main(args):
+def tsv2yml(args):
     cvts = dict(genome=str,species=str,source=str)
     gl = pd.read_csv(args.fi, sep="\t", header=0, converters=cvts,
                      true_values=['1','Y','Yes','T','True'],
@@ -85,18 +87,94 @@ def main(args):
     # with open(args.json, 'w') as outfile:
         # json.dump(j, outfile)
 
+def download(args):
+    cvts = dict(genome=str,species=str,source=str)
+    gl = pd.read_csv(args.cfg, sep="\t", header=0, converters=cvts,
+                     true_values=['1','Y','Yes','T','True'],
+                     false_values=['0','N','No','F','False'])
+
+    url_pre = "http://ftp.ebi.ac.uk/ensemblgenomes/pub"
+    for i in range(len(gl)):
+        if pd.isna(gl['status'][i]) or not gl['status'][i]:
+            print(f"{gl['genome'][i]}: skipped")
+            continue
+
+        genome,species,source,version,assembly,url_fas,url_gff = \
+            gl['genome'][i], gl['species'][i], gl['source'][i], gl['version'][i], \
+            gl['assembly'][i], gl['url_fas'][i], gl['url_gff'][i]
+
+        dirw = f"{args.dirg}/{genome}/raw"
+        if not op.isdir(dirw):
+            mkdir(dirw)
+        os.chdir(dirw)
+
+        if source == 'ensembl':
+            version = int(version)
+            species = species.replace(" ", "_")
+            assembly = assembly.replace(" ", "_")
+            url_fas = f"{url_pre}/release-{version}/plants/fasta/{species.lower()}/dna/{species}.{assembly}.dna.toplevel.fa.gz"
+            url_gff = f"{url_pre}/release-{version}/plants/gff3/{species.lower()}/{species}.{assembly}.{version}.gff3.gz"
+        fn1, fn2 = op.basename(url_fas), op.basename(url_gff)
+
+        comp1, fn1c = False, fn1
+        comp2, fn2c = False, fn2
+        if not fn1.endswith(".gz"):
+            comp1 = True
+            fn1c = "{fn1}.gz"
+        if not fn2.endswith(".gz"):
+            comp2 = True
+            fn2c = "{fn2}.gz"
+
+        if op.isfile(fn1c) and os.stat(fn1c).st_size > 0 and op.isfile(fn2c) and os.stat(fn2c).st_size > 0:
+            print(f"{genome}: already done")
+            continue
+        else:
+            print(f"{genome}: working")
+
+        if source == 'local':
+            sh(f"cp {url_fas} {fn1}")
+            sh(f"cp {url_gff} {fn2}")
+        else:
+            sh(f"axel -n {args.thread} {url_fas} -o {fn1}")
+            sh(f"axel -n {args.thread} {url_gff} -o {fn2}")
+
+        if comp1:
+            sh(f"gzip {fn1}")
+        if comp2:
+            sh(f"gzip {fn2}")
+        sh(f"ln -sf {fn1c} raw.fasta.gz")
+        sh(f"ln -sf {fn2c} raw.gff.gz")
+
+
 if __name__ == "__main__":
     import argparse
     ps = argparse.ArgumentParser(
         formatter_class = argparse.ArgumentDefaultsHelpFormatter,
-        description = "prepare genome config file for nextflow pipelines"
+        description = "help utilities to run the nextflow genome pipeline"
     )
+    sp = ps.add_subparsers(title = 'available commands', dest = 'command')
 
-    ps.add_argument('fi', help = 'input genome tsv')
-    ps.add_argument('fo', help = 'output yaml file')
-    ps.add_argument('--dirg', default="%s/zhoup-genome" % os.environ["s3"], help='genome directory')
-#    ps.add_argument('--json', default='genomes.json', help = 'output json file')
+    sp1 = sp.add_parser("conv",
+            formatter_class = argparse.ArgumentDefaultsHelpFormatter,
+            help = "prepare genome config file for nextflow pipelines")
+    sp1.add_argument('fi', help = 'input genome tsv')
+    sp1.add_argument('fo', help = 'output yaml file')
+    sp1.add_argument('--dirg', default="%s/zhoup-genome" % os.environ["s3"], help='genome directory')
+#    sp1.add_argument('--json', default='genomes.json', help = 'output json file')
+    sp1.set_defaults(func = tsv2yml)
+
+    sp1 = sp.add_parser("download",
+            formatter_class = argparse.ArgumentDefaultsHelpFormatter,
+            help = "download raw genome (fasta+gff) files")
+    sp1.add_argument('--cfg', default=f"{os.environ['genome']}/nf/genomes.tsv", help='genome config table')
+    sp1.add_argument('--dirg', default="%s/zhoup-genome" % os.environ["s3"], help='genome directory')
+    sp1.add_argument('--thread', type=int, default=4, help='downloading threads')
+    sp1.set_defaults(func = download)
 
     args = ps.parse_args()
-    main(args)
+    if args.command:
+        args.func(args)
+    else:
+        print('Error: need to specify a sub command\n')
+        ps.print_help()
 

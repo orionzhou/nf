@@ -1,32 +1,25 @@
-process download {
+process unzip {
   label 'low_memory'
   tag "${params.genomes[id].alias}"
 
   input:
-  tuple val(id), val(species), val(source), val(version), val(assembly), val(url_fas), val(url_gff)
+  tuple val(id), path("raw.fasta.gz"), path("raw.gff.gz")
 
   output:
   tuple val(id), path("raw.fasta"), emit: seq
   tuple val(id), path("raw.gff"), emit: gff
 
   script:
-  species = species.replaceAll('\\s','_')
-  assembly = assembly.replaceAll('\\s','_')
-  url_pre = "ftp://ftp.ensemblgenomes.org/pub/plants/release-${version.replaceAll(/\.[0-9]+$/,'')}"
-  url_fas = source=='ensembl_plants' ? "${url_pre}/fasta/${species.toLowerCase()}/dna/${species}.${assembly}.dna.toplevel.fa.gz" : url_fas
-  url_gff = source=='ensembl_plants' ? "${url_pre}/gff3/${species.toLowerCase()}/${species}.${assembly}.${version.replaceAll(/\.[0-9]+$/,'')}.gff3.gz" : url_gff
-  if (source == 'local')
-    """
-    cp ${url_fas} raw.fasta
-    cp ${url_gff} raw.gff
-    """
-  else
-    """
-    wget ${url_fas} -O raw.fasta.gz
-    wget ${url_gff} -O raw.gff.gz
-    gunzip raw.fasta.gz
-    gunzip raw.gff.gz
-    """
+  //species = species.replaceAll('\\s','_')
+  //assembly = assembly.replaceAll('\\s','_')
+  //url_pre = "ftp://ftp.ensemblgenomes.org/pub/plants/release-${version.replaceAll(/\.[0-9]+$/,'')}"
+  //url_pre = "http://ftp.ebi.ac.uk/ensemblgenomes/pub/release-${version.replaceAll(/\.[0-9]+$/,'')}/plants"
+  //url_fas = source=='ensembl_plants' ? "${url_pre}/fasta/${species.toLowerCase()}/dna/${species}.${assembly}.dna.toplevel.fa.gz" : url_fas
+  //url_gff = source=='ensembl_plants' ? "${url_pre}/gff3/${species.toLowerCase()}/${species}.${assembly}.${version.replaceAll(/\.[0-9]+$/,'')}.gff3.gz" : url_gff
+  """
+  gunzip -c raw.fasta.gz > raw.fasta
+  gunzip -c raw.gff.gz > raw.gff
+  """
 }
 
 process seqfmt {
@@ -462,7 +455,10 @@ workflow genome {
         .splitCsv(header:true, sep:'\t')
         .filter { it.genome in pick }
       gtable1 = gtable
-        .map {r -> [r.genome, r.species, r.source, r.version, r.assembly, r.url_fas, r.url_gff]}
+        .map {r -> [r.genome, 
+          file("${params.outdir}/${r.genome}/raw/raw.fasta.gz", checkIfExists:true),
+          file("${params.outdir}/${r.genome}/raw/raw.gff.gz", checkIfExists:true)
+          ]}
       gtable2 = gtable.map {r -> [r.genome, r.gap, r.prefix]}
       gtable3 = gtable.map {r -> [r.genome, r.gffopt]}
       gt_blat = gtable.map {r -> [r.genome, r.blat]}
@@ -478,8 +474,8 @@ workflow genome {
       gt_tandup = gtable.map {r -> [r.genome, r.tandup]}
       gt_rcfg = gtable.map {r -> [r.genome, r.rcfg]}
 
-    download(gtable1)
-    seq = download.out.seq; gff = download.out.gff
+    unzip(gtable1)
+    seq = unzip.out.seq; gff = unzip.out.gff
     seqfmt(seq.combine(gtable2, by:0))
     seq = seqfmt.out.seq
     chrom_size = seqfmt.out.chrom_size; chrom_bed = seqfmt.out.chrom_bed
