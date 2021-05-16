@@ -5,6 +5,7 @@ import os
 import os.path as op
 import sys
 import pandas as pd
+import logging
 #import simplejson as json
 import yaml
 
@@ -96,7 +97,7 @@ def download(args):
     url_pre = "http://ftp.ebi.ac.uk/ensemblgenomes/pub"
     for i in range(len(gl)):
         if pd.isna(gl['status'][i]) or not gl['status'][i]:
-            print(f"{gl['genome'][i]}: skipped")
+            logging.warn(f"{gl['genome'][i]}: skipped")
             continue
 
         genome,species,source,version,assembly,url_fas,url_gff = \
@@ -126,10 +127,10 @@ def download(args):
             fn2c = "{fn2}.gz"
 
         if op.isfile(fn1c) and os.stat(fn1c).st_size > 0 and op.isfile(fn2c) and os.stat(fn2c).st_size > 0:
-            print(f"{genome}: already done")
+            logging.warning(f"{genome}: already done")
             continue
         else:
-            print(f"{genome}: working")
+            logging.debug(f"{genome}: working")
 
         if source == 'local':
             sh(f"cp {url_fas} {fn1}")
