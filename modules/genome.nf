@@ -3,7 +3,7 @@ process unzip {
   tag "${params.genomes[id].alias}"
 
   input:
-  tuple val(id), path("raw.fasta.gz"), path("raw.gff.gz")
+  tuple val(id), val(source), path("raw.fasta.gz"), path("raw.gff.gz"), val(url_fas), val(url_gff)
 
   output:
   tuple val(id), path("raw.fasta"), emit: seq
@@ -12,14 +12,16 @@ process unzip {
   script:
   //species = species.replaceAll('\\s','_')
   //assembly = assembly.replaceAll('\\s','_')
-  //url_pre = "ftp://ftp.ensemblgenomes.org/pub/plants/release-${version.replaceAll(/\.[0-9]+$/,'')}"
-  //url_pre = "http://ftp.ebi.ac.uk/ensemblgenomes/pub/release-${version.replaceAll(/\.[0-9]+$/,'')}/plants"
-  //url_fas = source=='ensembl_plants' ? "${url_pre}/fasta/${species.toLowerCase()}/dna/${species}.${assembly}.dna.toplevel.fa.gz" : url_fas
-  //url_gff = source=='ensembl_plants' ? "${url_pre}/gff3/${species.toLowerCase()}/${species}.${assembly}.${version.replaceAll(/\.[0-9]+$/,'')}.gff3.gz" : url_gff
-  """
-  gunzip -c raw.fasta.gz > raw.fasta
-  gunzip -c raw.gff.gz > raw.gff
-  """
+  if( source == 'local' ) 
+    """
+    ln -sf ${url_fas} raw.fasta
+    ln -sf ${url_gff} raw.gff
+    """
+  else
+    """
+    gunzip -c raw.fasta.gz > raw.fasta
+    gunzip -c raw.gff.gz > raw.gff
+    """
 }
 
 process seqfmt {
@@ -455,9 +457,10 @@ workflow genome {
         .splitCsv(header:true, sep:'\t')
         .filter { it.genome in pick }
       gtable1 = gtable
-        .map {r -> [r.genome, 
-          file("${params.outdir}/${r.genome}/raw/raw.fasta.gz", checkIfExists:true),
-          file("${params.outdir}/${r.genome}/raw/raw.gff.gz", checkIfExists:true)
+        .map {r -> [r.genome, r.source,
+          file("${params.outdir}/${r.genome}/raw/raw.fasta.gz", checkIfExists:false),
+          file("${params.outdir}/${r.genome}/raw/raw.gff.gz", checkIfExists:false),
+          r.url_fas, r.url_gff
           ]}
       gtable2 = gtable.map {r -> [r.genome, r.gap, r.prefix]}
       gtable3 = gtable.map {r -> [r.genome, r.gffopt]}
