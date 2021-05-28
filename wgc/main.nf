@@ -11,7 +11,10 @@ prep_params(params, workflow)
   ch_out_doc = file("$baseDir/docs/output.md", checkIfExists: true)
 
 // validate inputs
-  comps = Channel.fromList( params.comps )
+  comps = Channel.fromPath(params.comps, checkIfExists: true)
+      .ifEmpty { exit 1, "comparison file not found: ${params.comps}" }
+      .splitCsv(header:false, sep:',')
+      .map {r -> [r[0], r[1]]}
   qrys = comps.map{r -> r[0]}.unique().map{r->[r,params.genomes[r]]}
   tgts = comps.map{r -> r[1]}.unique().map{r->[r,params.genomes[r]]}
   // qry seq
