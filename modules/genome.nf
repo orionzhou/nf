@@ -118,7 +118,7 @@ process gff_idx {
 	gff.py 2gtf $gff > 10.gtf
 	gff.py 2bed12 $gff > 10.bed
 	gff.py note --attribute note1,note2 $gff > 10.desc.tsv
-	gff.py 2fas $gff $ref > 10.nt.fasta
+	python -m jcvi.formats.gff load $gff $ref -o 10.nt.fasta
 	fasta.py translate 10.nt.fasta > 10.aa.fasta
 	$baseDir/bin/genome/gff2txdb.R $gff $sizes 10.sqlite
 
@@ -128,7 +128,7 @@ process gff_idx {
 	gff.py 2gtf 15.gff > 15.gtf
 	gff.py 2bed12 15.gff > 15.bed
 	gff.py note --attribute note1,note2 15.gff > 15.desc.tsv
-	gff.py 2fas 15.gff $ref > 15.nt.fasta
+	python -m jcvi.formats.gff load 15.gff $ref -o 15.nt.fasta
 	fasta.py translate 15.nt.fasta > 15.aa.fasta
 	$baseDir/bin/genome/gff2txdb.R 15.gff $sizes 15.sqlite
 	"""
