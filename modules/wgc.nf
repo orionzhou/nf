@@ -21,7 +21,7 @@ process prep_qry {
   cut -f1,3 03.bed > 03.sizes
   chain.py fromBed 03.bed 03.sizes ${sizes} ${qry}.chain
   ls ${qry}_split/*.bed | \\
-    parallel -j ${task.cpus} "fasta.py extract ${fas} {} > {.}.fas"
+    parallel -j 1 "fasta.py extract ${fas} {} > {.}.fas"
   """
   //rm ${qry}_split/*.bed
 }
