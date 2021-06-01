@@ -87,11 +87,8 @@ def check_fastq(design, paired, source):
 def nf_start(args):
     yid = args.yid
     barn, genome = args.metadir, args.genome
-    metadir = op.join(barn, genome, '05_excel')
-    xls = "%s/%s.xlsx" % (metadir, yid)
-    assert op.isfile(xls)
 
-    design = "%s.tsv" % (yid)
+    design = "design.tsv"
     ft = "%s/%s.config" % (args.cfgdir, args.lib)
     fht = must_open(ft, 'r')
     tmp = Template(fht.read())
@@ -130,8 +127,11 @@ def nf_start(args):
     mkdir(rawdir, overwrite=True)
     os.chdir(rundir)
 
-    sh("excel.py tsv %s %s" % (xls, design))
-    check_fastq(design, args.paired, args.source)
+    # metadir = op.join(barn, genome, '05_excel')
+    # xls = "%s/%s.xlsx" % (metadir, yid)
+    # assert op.isfile(xls)
+    sh(f"nf.barn.py {yid} -o design.tsv")
+    #check_fastq(design, args.paired, args.source)
 
     fc = "nextflow.config"
     fhc = must_open(fc, 'w')
@@ -168,7 +168,7 @@ if __name__ == "__main__":
     ps.add_argument('--cfgdir', default="%s/configs/templates" % os.environ['nf'], help = 'nextflow template config dir')
     ps.add_argument('--workdir', default=os.environ['NXF_WORK'], help = 'nextflow work dir')
     ps.add_argument('--rawdir', default="%s/raw" % os.environ['NXF_CACHE'], help = 'nextflow raw output dir')
-    ps.add_argument('--source', default='sra', choices=allowed_sources, help='sequence source')
+    ps.add_argument('--source', default='local', choices=allowed_sources, help='sequence source')
     ps.add_argument('--read_type', default='illumina', choices=['illumina','nanopore'], help='read type')
     ps.add_argument('--paired', default='SE', choices=['SE','PE','mixed'], help='single end, paired end or mixed')
     ps.add_argument('--interleaved', action='store_true', help='interleaved format?')
@@ -182,7 +182,7 @@ if __name__ == "__main__":
     ps.add_argument('--saveBAM', action='store_true', help='save bam files?')
     ps.add_argument('--preseq', action='store_true', help='run preseq?')
 
-    g1 = ps.add_argument_group('rnaseq', 'rna-seq specific arguments')
+    g1 = ps.add_argument_group('rnaseq', 'RNA-Seq specific arguments')
     g1.add_argument('--stranded', default='no', choices=['no','forward','reverse'], help = 'read strandedness')
     g1.add_argument('--ase', action='store_true', help='allele specific expression?')
     g1.add_argument('--ril', action='store_true', help='genotype (ril) samples?')

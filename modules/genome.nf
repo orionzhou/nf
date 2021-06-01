@@ -12,16 +12,12 @@ process unzip {
   script:
   //species = species.replaceAll('\\s','_')
   //assembly = assembly.replaceAll('\\s','_')
-  if( source == 'local' ) 
-    """
-    ln -sf ${url_fas} raw.fasta
-    ln -sf ${url_gff} raw.gff
-    """
-  else
-    """
-    gunzip -c raw.fasta.gz > raw.fasta
-    gunzip -c raw.gff.gz > raw.gff
-    """
+  //ln -sf ${url_fas} raw.fasta
+  //ln -sf ${url_gff} raw.gff
+  """
+  gunzip -c raw.fasta.gz > raw.fasta
+  gunzip -c raw.gff.gz > raw.gff
+  """
 }
 
 process seqfmt {

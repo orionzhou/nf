@@ -97,7 +97,7 @@ def download(args):
     url_pre = "http://ftp.ebi.ac.uk/ensemblgenomes/pub"
     for i in range(len(gl)):
         if pd.isna(gl['status'][i]) or not gl['status'][i]:
-            logging.warn(f"{gl['genome'][i]}: skipped")
+            logging.warning(f"{gl['genome'][i]}: skipped")
             continue
 
         genome,species,source,version,assembly,url_fas,url_gff = \
@@ -121,10 +121,10 @@ def download(args):
         comp2, fn2c = False, fn2
         if not fn1.endswith(".gz"):
             comp1 = True
-            fn1c = "{fn1}.gz"
+            fn1c = f"{fn1}.gz"
         if not fn2.endswith(".gz"):
             comp2 = True
-            fn2c = "{fn2}.gz"
+            fn2c = f"{fn2}.gz"
 
         if op.isfile(fn1c) and os.stat(fn1c).st_size > 0 and op.isfile(fn2c) and os.stat(fn2c).st_size > 0:
             logging.warning(f"{genome}: already done")

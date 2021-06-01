@@ -8,7 +8,7 @@ def help() {
 
   The typical command for running the pipeline is as follows:
 
-  nextflow run rnaseq --design design.tsv --genome Zmays_v4 -profile docker
+  nextflow run rnaseq -params-file genomes.yml --genome Zmays_B73v5 -profile conda,msi
 
   Mandatory arguments:
     -design                       tab-separated sample design table
@@ -132,10 +132,7 @@ def summary() {
   if (workflow.revision) summary['Pipeline Release'] = workflow.revision
   summary['Run Name'] = params.name ?: workflow.runName
   summary['Design'] = params.design
-  summary['Source'] = params.source
-  summary['Read type'] = params.read_type
-  summary['Paired'] = params.paired
-  summary['Stranded'] = params.stranded
+  summary['Sequence'] = "source [$params.source]; type [$params.read_type]; paired [$params.paired]; stranded [$params.stranded]"
   summary['Genome'] = params.genome
   summary['Trimmer'] = params.trimmer
   //summary['Trimming'] = "5'R1: $params.clip_r1 / 5'R2: $params.clip_r2 / 3'R1: $params.three_prime_clip_r1 / 3'R2: $params.three_prime_clip_r2 / NextSeq Trim: $params.trim_nextseq"

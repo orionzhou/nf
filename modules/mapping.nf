@@ -233,7 +233,8 @@ workflow aln {
         .fromPath("${params.hisat2_index}*ht2*", checkIfExists: true)
         .ifEmpty { exit 1, "HISAT2 index not found: ${params.hisat2_index}" }
         .collect()
-        .map {row -> tuple params.hisat2_index, row}
+        .map {r -> [params.hisat2_index, r]}
+        .map {r -> [r[0].substring(r[0].lastIndexOf(File.separator)+1), r[1]]}
       //splicesites = Channel
         //.fromPath(params.bed12, checkIfExists: true)
         //.ifEmpty { exit 1, "HISAT2 splice sites file not found: $splicesites" }
@@ -245,7 +246,7 @@ workflow aln {
       gtf = Channel.fromPath(params.gtf, checkIfExists: true)
          .ifEmpty { exit 1, "GTF annotation file not found: ${params.gtf}" }
       star_index = Channel
-        .fromPath(params.star_index, checkIfExists: true)
+        .fromPath(params.star_index.replaceAll("/$", ""), checkIfExists: true)
         .ifEmpty { exit 1, "STAR index not found: ${params.star_index}" }
       star(reads.combine(star_index).combine(gtf))
       aln = star.out
@@ -253,10 +254,12 @@ workflow aln {
       lastPath = params.bwa_index.lastIndexOf(File.separator)
       bwa_dir =  params.bwa_index.substring(0,lastPath+1)
       bwa_base = params.bwa_index.substring(lastPath+1)
-      bwa_index = Channel.fromPath(bwa_dir, checkIfExists: true)
+      bwa_index = Channel
+        .fromPath("${bwa_dir}*", checkIfExists: true)
         .ifEmpty { exit 1, "bwa index not found: ${params.bwa_index}" }
         .collect()
-        .map {row -> tuple params.bwa_index, row}
+        .map {r -> [params.bwa_index, r]}
+        .map {r -> [r[0].substring(r[0].lastIndexOf(File.separator)+1), r[1]]}
       if (params.aligner == 'bwa_aln') {
         bwa_aln(reads.combine(bwa_index))
         aln = bwa_aln.out
@@ -274,6 +277,7 @@ workflow aln {
     bam = aln.bam
     l = aln.log
 }
+
 
 
 
