@@ -133,6 +133,12 @@ def download(args):
             logging.debug(f"{genome}: working")
 
         if source == 'local':
+            if not op.isfile(url_fas):
+                url_fas = op.join(args.dirg, url_fas)
+            if not op.isfile(url_gff):
+                url_gff = op.join(args.dirg, url_gff)
+            if not op.isfile(url_fas) or not op.isfile(url_gff):
+                logging.error(f"no fasta/gff found: {url_fas} {url_gff}")
             sh(f"cp {url_fas} {fn1}")
             sh(f"cp {url_gff} {fn2}")
         else:
