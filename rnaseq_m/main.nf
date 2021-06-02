@@ -18,11 +18,12 @@ prep_params(params, workflow)
   }
   genomes = Channel
     .fromList( params.genome_list )
+    .map{r -> [r,params.genomes[r]]}
 
 include {fq} from '../modules/fastq.nf'
 include {aln} from '../modules/mapping_m.nf'
 include {bam} from '../modules/bam.nf'
-include {version; outdoc; rnaseq; mg} from '../modules/rnaseq.nf'
+include {version; rnaseq; mg} from '../modules/rnaseq_m.nf'
 
 def sum = summary()
 log.info show_header(sum)
@@ -41,20 +42,11 @@ workflow {
     aln(fq.out.trim_reads, genomes)
     bam(aln.out.bam, ch_read_num)
     bams = bam.out.bams
-    rnaseq(bams, reads, readlist)
+    rnaseq(bams, reads, readlist, genomes)
 
-    //mg(readlist.collect(), rcfg.collect(),
-      //bam.out.stats.collect(), rnaseq.out.fcnt_txt.collect(),
-      //rnaseq.out.salm_gcnt.collect().ifEmpty([]),
-      //rnaseq.out.salm_gtpm.collect().ifEmpty([]),
-      //rnaseq.out.salm_tcnt.collect().ifEmpty([]),
-      //rnaseq.out.salm_ttpm.collect().ifEmpty([]),
-      //rnaseq.out.ase_gene.collect().ifEmpty([]),
-      //rnaseq.out.ase_snp.collect().ifEmpty([]),
-      //rnaseq.out.ril_csv.collect().ifEmpty([]),
-      //rnaseq.out.ril_txt.collect().ifEmpty([])
-      //)
-    //renorm(design2.collect(), mg.out, rcfg.collect())
+    mg(readlist.collect(),
+      bam.out.stats.collect(), rnaseq.out.fcnt_txt.collect()
+      )
   //publish:
     //readlist to: "${params.qcdir}/${params.name}", mode:'copy', overwrite:'true'
     //mqc.out.html to: "${params.webdir}", mode:'copy', overwrite:'true'

@@ -240,27 +240,27 @@ workflow aln {
     if (params.aligner == 'hisat2') {
     // [genome, db_pre, db_files]
       hs2_indices = genomes
-        .map {g -> [g, params.genomes[g].hisat2]}
+        .map {r -> [r[0], r[1].hisat2]}
         .map {r -> [r[0], r[1].substring(r[1].lastIndexOf(File.separator)+1),
           file("${r[1]}*ht2*").toList()]}
       hs2(reads.combine(hs2_indices))
       aln = hs2.out
     } else if (params.aligner == 'star') {
       gff = genomes
-        .map {g -> [g, file(params.genomes[g].gff, checkIfExists: true)]}
+        .map {r -> [r[0], file(r[1].gff, checkIfExists: true)]}
       gtf = genomes
-        .map {g -> [g, file(params.genomes[g].gtf, checkIfExists: true)]}
+        .map {r -> [r[0], file(r[1].gtf, checkIfExists: true)]}
       ch_index = genomes
-        .map {g -> [g, params.genomes[g].star.replaceAll("\\/+$", '')]}
+        .map {r -> [r[0], r[1].star.replaceAll("\\/+\$", ''),
+          file(r[1].gff, checkIfExists: true)]}
         .map {r -> [r[0], r[1].substring(r[1].lastIndexOf(File.separator)+1),
-          file(r[1], checkIfExists: true),
-          file(params.genomes[r[0]].gff, checkIfExists: true)
+          file(r[1], checkIfExists: true), r[2]
           ]}
       star(reads.combine(ch_index))
       aln = star.out
     } else if (params.aligner in ['bwa','bwa_aln']) {
       bwa_index = genomes
-        .map {g -> [g, params.genomes[g].bwa]}
+        .map {r -> [r[0], r[1].bwa]}
         .map {r -> [r[0], r[1].substring(r[1].lastIndexOf(File.separator)+1),
           file("${r[1]}*").toList()]}
       if (params.aligner == 'bwa_aln') {
@@ -272,7 +272,7 @@ workflow aln {
       }
     } else if (params.aligner == 'minimap2') {
       ch_fasta = genomes
-        .map {g -> [g, params.genomes[g].fasta]}
+        .map {r -> [r[0], r[1].fasta]}
         .map {r -> [r[0], r[1].substring(r[1].lastIndexOf(File.separator)+1),
           file(r[1], checkIfExists: true)]}
       minimap2(reads.combine(ch_fasta))
