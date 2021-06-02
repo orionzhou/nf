@@ -1,33 +1,23 @@
-process version {
-  publishDir "${params.outdir}/pipeline_info", mode:'copy', overwrite:'true'
+process cage_gtf {
+  label "low_memory"
+  tag "$genome"
+
+  when:
+  params.cage
+
+  input:
+  tuple val(genome), path(gtf), path(sizes)
 
   output:
-  path 'software_versions_mqc.yaml', emit: yml
-  path "software_versions.csv", emit: csv
+  tuple val(genome), path("gene.gtf")
 
   script:
-  //salmon --version &> v_salmon.txt
+	left = 1000
+	right = 0
   """
-  echo $workflow.manifest.version &> v_ngi_rnaseq.txt
-  echo $workflow.nextflow.version &> v_nextflow.txt
-  fastqc --version &> v_fastqc.txt
-  cutadapt --version &> v_cutadapt.txt
-  trim_galore --version &> v_trim_galore.txt
-  sortmerna --version &> v_sortmerna.txt
-  STAR --version &> v_star.txt
-  hisat2 --version &> v_hisat2.txt
-  stringtie --version &> v_stringtie.txt
-  preseq &> v_preseq.txt
-  read_duplication.py --version &> v_rseqc.txt
-  bamCoverage --version &> v_deeptools.txt || true
-  featureCounts -v &> v_featurecounts.txt
-  picard MarkDuplicates --version &> v_markduplicates.txt  || true
-  samtools --version &> v_samtools.txt
-  multiqc --version &> v_multiqc.txt
-  Rscript -e "library(edgeR); write(x=as.character(packageVersion('edgeR')), file='v_edgeR.txt')"
-  Rscript -e "library(dupRadar); write(x=as.character(packageVersion('dupRadar')), file='v_dupRadar.txt')"
-  unset DISPLAY && qualimap rnaseq &> v_qualimap.txt || true
-  $baseDir/bin/rnaseq/versions.py &> software_versions_mqc.yaml
+	bioawk -t '{if(\$3=="gene") {split(\$9, a, ";"); split(a[1],b,"="); print \$1, \$4, \$5, b[2], ".", \$7}}' $gtf > gene.bed
+	bedtools slop -i gene.bed -g $sizes -s -l $left -r $right > gene.2.bed
+	bioawk -t '{print \$1, ".", "gene", \$2, \$3, ".", \$6, ".", "gene_id \\""\$4"\\";"}' gene.2.bed > gene.gtf
   """
 }
 
@@ -36,46 +26,33 @@ process fcnt {
   tag "$id"
   publishDir "${params.outdir}/31_featureCounts", mode:'copy', overwrite:'true',
     saveAs: {fn ->
-      if (fn.indexOf("biotype_counts") > 0) "biotype_counts/$fn"
-      else if (fn.indexOf("_gene.featureCounts.txt.summary") > 0) "gene_count_summaries/$fn"
-      else if (fn.indexOf("_gene.featureCounts.txt") > 0) "gene_counts/$fn"
+      if (fn.indexOf(".tsv") > 0) "$fn"
+      else if (fn.indexOf(".summary.txt") > 0) "summary/$fn"
       else fn
     }
 
   input:
-  tuple val(sid), val(genome), path(bam), path(bai), path(gtf), path(biotypes_header), val(paired), path(reads)
+  tuple val(sid), val(genome), path(bam), path(bai), path(gtf), val(paired), path(reads)
 
   output:
-  path "${id}_gene.featureCounts.txt", emit: txt
-  path "${id}_gene.featureCounts.txt.summary", emit: log
-  path "${id}_biotype_counts*mqc.{txt,tsv}", emit: biotype optional true
+  path "${id}.tsv", emit: tsv
+  path "${id}.summary.txt", emit: log
 
   script:
   id = "${sid}-${genome}"
-  def mq = params.mapQuality
-  def flag_attr = params.fc_extra_attributes ? "--extraAttributes ${params.fc_extra_attributes}" : ''
-  def flag_srd = params.stranded == 'no' ? 0 : params.stranded=='reverse' ? 2 : 1
-  def flag_pe = paired == 'PE' ? "-p" : ""
-  def flag_long = params.read_type == 'nanopore' ? "-L" : ""
-  biotype_qc = params.skip_biotype_qc ? '' : """
-    featureCounts -a $gtf -g ${params.biotype} \\
-    -o ${id}_biotype.featureCounts.txt -p \\
-    -s $flag_srd $bam
-    """.stripIndent()
-  mod_biotype = params.skip_biotype_qc ? '' : """
-    cut -f 1,7 ${id}_biotype.featureCounts.txt | \\
-    tail -n +3 | cat $biotypes_header - >> ${id}_biotype_counts_mqc.txt &&\\
-    mqc_features_stat.py ${id}_biotype_counts_mqc.txt -s $id \\
-    -f rRNA -o ${id}_biotype_counts_gs_mqc.tsv
-    """.stripIndent()
-  //$biotype_qc
-  //$mod_biotype
+  mq = params.mapQuality
+  flag_srd = params.stranded == 'no' ? 0 : params.stranded=='reverse' ? 2 : 1
+  flag_pe = paired == 'PE' ? "-p" : ""
+  flag_long = params.read_type == 'nanopore' ? "-L" : ""
+  flag_cage = params.cage ? "--read2pos 5" : ""
+  flag_multi = params.count_multi ? "-M -O --fraction" : ""
   """
-  featureCounts -a $gtf --primary -Q $mq -T ${task.cpus} \\
-    -g ${params.fc_group_features} -t ${params.fc_count_type} \\
-    -o ${id}_gene.featureCounts.txt \\
-    $flag_attr $flag_pe $flag_long -s $flag_srd \\
+  featureCounts --primary -Q $mq -T ${task.cpus} \\
+    -a $gtf -g gene_id -t gene \\
+    $flag_pe $flag_long -s $flag_srd $flag_multi $flag_cage \\
+    -o ${id}.tsv \\
     $bam
+  mv ${id}.tsv.summary ${id}.summary.txt
   """
 }
 
@@ -186,17 +163,22 @@ workflow rnaseq {
     design
     genomes
   main:
-    sizes = genomes
-      .map {r -> [r[0], file(r[1].genome_sizes, checkIfExists: true)]}
-    gff = genomes
-      .map {r -> [r[0], file(r[1].gff, checkIfExists: true)]}
-    gtf = genomes
-      .map {r -> [r[0], file(r[1].gtf, checkIfExists: true)]}
-    bed = genomes
-      .map {r -> [r[0], file(r[1].bed, checkIfExists: true)]}
-    pbed = genomes
-      .map {r -> [r[0], file(r[1].pbed, checkIfExists: true)]}
-
+    // channel set up
+      sizes = genomes
+        .map {r -> [r[0], file(r[1].genome_sizes, checkIfExists: true)]}
+      gff = genomes
+        .map {r -> [r[0], file(r[1].gff, checkIfExists: true)]}
+      gtf = genomes
+        .map {r -> [r[0], file(r[1].gtf, checkIfExists: true)]}
+      bed = genomes
+        .map {r -> [r[0], file(r[1].bed, checkIfExists: true)]}
+      pbed = genomes
+        .map {r -> [r[0], file(r[1].pbed, checkIfExists: true)]}
+		
+		if (params.cage) {
+			cage_gtf(gff.join(sizes))
+      gtf = cage_gtf.out
+		}
     bams = bams0
       .map {r -> [r[0].split("-")[0], r[0].split("-")[1], r[1], r[2]]}
     in1 = bams
@@ -204,10 +186,10 @@ workflow rnaseq {
       .join(gtf)
       .map {r -> [r[1], r[0], r[2], r[3], r[4]]}
       .join(reads)
-    fcnt(in1)
+    in1 | fcnt
 
   emit:
-    fcnt_txt = fcnt.out.txt
+    fcnt_tsv = fcnt.out.tsv
     fcnt_log = fcnt.out.log
 }
 
@@ -216,7 +198,7 @@ process mg {
   tag "${params.name}"
   //conda "$NXF_CONDA_CACHEDIR/r"
   publishDir "${params.outdir}/50_final", mode:'copy', overwrite:'true'
-  publishDir "${params.qcdir}/${params.genome}/${params.name}", mode:'copy', overwrite:'true'
+  //publishDir "${params.qcdir}/${params.genome}/${params.name}", mode:'copy', overwrite:'true'
 
   input:
   path meta
@@ -224,7 +206,6 @@ process mg {
   path fcnts
 
   output:
-  path "meta.tsv"
   path "bamstats.tsv"
   path "featurecounts.rds"
 
@@ -233,12 +214,9 @@ process mg {
   cmds = []
   opts = []
   """
-  cp $meta meta.tsv
   $baseDir/bin/merge.stats.R --opt bam_stat -o bamstats.tsv $bamstats
   $baseDir/bin/merge.stats.R --opt featurecounts -o featurecounts.rds $fcnts
   """
 }
-
-
 
 

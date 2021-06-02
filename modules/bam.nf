@@ -36,7 +36,7 @@ process markdup {
   path "${id}.txt", emit: metric
 
   script:
-  markdup_java_options = (task.memory.toGiga() > 8) ? params.markdup_java_options : "\"-Xms" +  (task.memory.toGiga() / 2 )+"g "+ "-Xmx" + (task.memory.toGiga() - 1)+ "g\""
+  markdup_java_options = (task.memory.toGiga() > 8) ? params.markdup_java_options : "\"-Xms" +  (task.memory.toGiga() - 2 )+"g "+ "-Xmx" + (task.memory.toGiga() - 2)+ "g\""
   """
   picard ${markdup_java_options} MarkDuplicates \\
       INPUT=$bam \\

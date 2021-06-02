@@ -23,7 +23,7 @@ prep_params(params, workflow)
 include {fq} from '../modules/fastq.nf'
 include {aln} from '../modules/mapping_m.nf'
 include {bam} from '../modules/bam.nf'
-include {version; rnaseq; mg} from '../modules/rnaseq_m.nf'
+include {rnaseq; mg} from '../modules/rnaseq_m.nf'
 
 def sum = summary()
 log.info show_header(sum)
@@ -32,8 +32,6 @@ check_host()
 include {get_read_num} from '../modules/utils.nf'
 workflow {
   main:
-    version()
-
     design | fq
     reads = fq.out.trim_reads
     readlist = fq.out.readlist
@@ -45,7 +43,7 @@ workflow {
     rnaseq(bams, reads, readlist, genomes)
 
     mg(readlist.collect(),
-      bam.out.stats.collect(), rnaseq.out.fcnt_txt.collect()
+      bam.out.stats.collect(), rnaseq.out.fcnt_tsv.collect()
       )
   //publish:
     //readlist to: "${params.qcdir}/${params.name}", mode:'copy', overwrite:'true'

@@ -217,8 +217,8 @@ process upd {
   label 'low_memory'
   tag "${params.name}"
   //conda "$NXF_CONDA_CACHEDIR/r"
-  publishDir "${params.outdir}", mode:'copy', overwrite:'true'
-  publishDir "${params.qcdir}/${params.genome}/${params.name}", mode:'copy', overwrite:'true'
+  publishDir "${params.outdir}/50_final", mode:'copy', overwrite:'true'
+  //publishDir "${params.qcdir}/${params.genome}/${params.name}", mode:'copy', overwrite:'true'
 
   input:
   path(design)
