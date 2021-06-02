@@ -25,7 +25,7 @@ ti = tibble(fi = fis) %>%
 
 read_featurecount <- function(fi)
     read_tsv(fi, skip = 1) %>%
-        select(gid = 1, cnt = 8)
+        select(gid = 1, cnt = 7)
 
 read_mmquant <- function(fi)
     read_tsv(fi, col_types = 'ci') %>%

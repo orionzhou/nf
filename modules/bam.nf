@@ -30,7 +30,7 @@ process markdup {
 
   input:
   tuple val(id), path(bam), path(bai)
-
+  
   output:
   tuple val(id), path("${id}.bam"), path("${id}.bam.bai"), emit: bam
   path "${id}.txt", emit: metric
@@ -95,12 +95,18 @@ workflow bam {
     raw_bams
     ch_read_num
   main:
-    raw_bams | bamsort | (bamstat & markdup)
-    bams = markdup.out.bam
+    raw_bams | bamsort | bamstat
+    bams = bamsort.out
+    markup = Channel.empty()
+    if ( !params.skip_markdup ) {
+      bams | markdup
+      bams = markdup.out.bam
+      markdup = markdup.out.metric
+    }
     pseq(bams.join(ch_read_num))
   emit:
     bams = bams
-    markdup = markdup.out.metric
+    markdup = markdup
     stats = bamstat.out
     pseq = pseq.out
 }

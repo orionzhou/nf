@@ -108,6 +108,7 @@ def nf_start(args):
                      saveBAM = str(args.saveBAM).lower(),
                      genome = args.genome,
                      skip_preseq = str(not args.preseq).lower(),
+                     skip_markdup = str(not args.markdup).lower(),
 
                      stranded = args.stranded,
                      count_multi = str(args.multi).lower(),
@@ -174,7 +175,7 @@ if __name__ == "__main__":
     ps.add_argument('--paired', default='SE', choices=['SE','PE','mixed'], help='single end, paired end or mixed')
     ps.add_argument('--interleaved', action='store_true', help='interleaved format?')
     ps.add_argument('--metadir', default=os.environ['ba'], help = 'meta table directory')
-    ps.add_argument('--genome', default='Zmays_B73', help = 'reference genome')
+    ps.add_argument('--genome', default='Zmays_B73v5', help = 'reference genome')
     ps.add_argument('--keep', action='store_true', help='keep previous results?')
     ps.add_argument('--save_fastq', action='store_true', help='save fastq files?')
     ps.add_argument('--trimmer', default='trim_galore', choices=['no','trim_galore'], help='trimming software')
@@ -182,6 +183,7 @@ if __name__ == "__main__":
     ps.add_argument('--aligner', default='auto', help='aligning software')
     ps.add_argument('--saveBAM', action='store_true', help='save bam files?')
     ps.add_argument('--preseq', action='store_true', help='run preseq?')
+    ps.add_argument('--markdup', action='store_true', help='mark PCR duplicates?')
 
     g1 = ps.add_argument_group('rnaseq', 'RNA-Seq specific arguments')
     g1.add_argument('--stranded', default='no', choices=['no','forward','reverse'], help = 'read strandedness')
