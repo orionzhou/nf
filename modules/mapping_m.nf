@@ -4,8 +4,8 @@ process hs2 {
   publishDir "${params.outdir}/11_hisat2", mode:'copy', overwrite:'true',
     saveAs: { fn ->
       if (fn.indexOf(".hisat2_summary.txt") > 0) "logs/$fn"
-      else if (!params.saveBAM && fn == 'where_are_my_files.txt') fn
-      else if (params.saveBAM && fn != 'where_are_my_files.txt') fn
+      //else if (!params.saveBAM && fn == 'where_are_my_files.txt') fn
+      //else if (params.saveBAM && fn != 'where_are_my_files.txt') fn
       else null
     }
 

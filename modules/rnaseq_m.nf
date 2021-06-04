@@ -1,6 +1,8 @@
 process cage_gtf {
   label "low_memory"
   tag "$genome"
+  publishDir "${params.outdir}/30_gtf", mode:'copy', overwrite:'true',
+    saveAs: { fn -> "${genome}.gtf"}
 
   when:
   params.cage
@@ -15,9 +17,9 @@ process cage_gtf {
 	left = 1000
 	right = 0
   """
-	bioawk -t '{if(\$3=="gene") {split(\$9, a, ";"); split(a[1],b,"="); print \$1, \$4, \$5, b[2], ".", \$7}}' $gtf > gene.bed
+	bioawk -t '{if(\$3=="gene") {split(\$9, a, ";"); split(a[1],b,"="); print \$1, \$4-1, \$5, b[2], ".", \$7}}' $gtf > gene.bed
 	bedtools slop -i gene.bed -g $sizes -s -l $left -r $right > gene.2.bed
-	bioawk -t '{print \$1, ".", "gene", \$2, \$3, ".", \$6, ".", "gene_id \\""\$4"\\";"}' gene.2.bed > gene.gtf
+	bioawk -t '{print \$1, ".", "gene", \$2+1, \$3, ".", \$6, ".", "gene_id \\""\$4"\\";"}' gene.2.bed > gene.gtf
   """
 }
 
@@ -154,8 +156,6 @@ process bigwig {
   """
 }
 
-include {cage1; cage2} from './cage.nf'
-
 workflow rnaseq {
   take:
     bams0
@@ -183,9 +183,9 @@ workflow rnaseq {
       .map {r -> [r[0].split("-")[0], r[0].split("-")[1], r[1], r[2]]}
     in1 = bams
       .map {r -> [r[1], r[0], r[2], r[3]]}
-      .join(gtf)
+      .combine(gtf, by:0)
       .map {r -> [r[1], r[0], r[2], r[3], r[4]]}
-      .join(reads)
+      .combine(reads, by:0)
     in1 | fcnt
 
   emit:

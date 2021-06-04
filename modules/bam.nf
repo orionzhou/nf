@@ -1,8 +1,8 @@
 process bamsort {
   label 'mid_memory'
   tag "$id"
-  //publishDir "${params.outdir}/20_bam_sorted", mode:'link', overwrite:'true',
-  //  saveAs: { fn -> params.saveBAM ? fn : null }
+  publishDir "${params.outdir}/20_bam", mode:'copy', overwrite:'true',
+    saveAs: { fn -> params.saveBAM && params.skip_markdup ? fn : null }
 
   input:
   tuple val(id), path(ibams)
