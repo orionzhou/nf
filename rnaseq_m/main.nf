@@ -43,7 +43,8 @@ workflow {
     rnaseq(bams, reads, readlist, genomes)
 
     mg(readlist.collect(),
-      bam.out.stats.collect(), rnaseq.out.fcnt_tsv.collect()
+      bam.out.stats.collect(), rnaseq.out.fcnt_uniq.collect(),
+      rnaseq.out.fcnt_multi.collect()
       )
   //publish:
     //readlist to: "${params.qcdir}/${params.name}", mode:'copy', overwrite:'true'

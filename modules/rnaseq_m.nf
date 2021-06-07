@@ -37,8 +37,9 @@ process fcnt {
   tuple val(sid), val(genome), path(bam), path(bai), path(gtf), val(paired), path(reads)
 
   output:
-  path "${id}.tsv", emit: tsv
-  path "${id}.summary.txt", emit: log
+  path "${id}.uniq.tsv", emit: uniq
+  path "${id}.multi.tsv", emit: multi
+  path "${id}.*.summary.txt", emit: log
 
   script:
   id = "${sid}-${genome}"
@@ -47,14 +48,21 @@ process fcnt {
   flag_pe = paired == 'PE' ? "-p" : ""
   flag_long = params.read_type == 'nanopore' ? "-L" : ""
   flag_cage = params.cage ? "--read2pos 5" : ""
-  flag_multi = params.count_multi ? "-M -O --fraction" : ""
+  //flag_multi = params.count_multi ? "-M -O --fraction" : ""
+  flag_multi = "-M -O --fraction"
   """
   featureCounts --primary -Q $mq -T ${task.cpus} \\
     -a $gtf -g gene_id -t gene \\
-    $flag_pe $flag_long -s $flag_srd $flag_multi $flag_cage \\
-    -o ${id}.tsv \\
+    $flag_pe $flag_long -s $flag_srd $flag_cage \\
+    -o ${id}.uniq.tsv \\
     $bam
-  mv ${id}.tsv.summary ${id}.summary.txt
+  featureCounts --primary -Q $mq -T ${task.cpus} \\
+    -a $gtf -g gene_id -t gene \\
+    $flag_pe $flag_long -s $flag_srd $flag_multi $flag_cage \\
+    -o ${id}.multi.tsv \\
+    $bam
+  mv ${id}.uniq.tsv.summary ${id}.uniq.summary.txt
+  mv ${id}.multi.tsv.summary ${id}.multi.summary.txt
   """
 }
 
@@ -189,7 +197,8 @@ workflow rnaseq {
     in1 | fcnt
 
   emit:
-    fcnt_tsv = fcnt.out.tsv
+    fcnt_uniq = fcnt.out.uniq
+    fcnt_multi = fcnt.out.multi
     fcnt_log = fcnt.out.log
 }
 
@@ -203,11 +212,13 @@ process mg {
   input:
   path meta
   path bamstats
-  path fcnts
+  path fcnt_uniq
+  path fcnt_multi
 
   output:
   path "bamstats.tsv"
-  path "featurecounts.rds"
+  path "featurecounts.uniq.rds"
+  path "featurecounts.multi.rds"
 
   script:
   yid = params.name
@@ -215,7 +226,8 @@ process mg {
   opts = []
   """
   $baseDir/bin/merge.stats.R --opt bam_stat -o bamstats.tsv $bamstats
-  $baseDir/bin/merge.stats.R --opt featurecounts -o featurecounts.rds $fcnts
+  $baseDir/bin/merge.stats.R --opt featurecounts -o featurecounts.uniq.rds $fcnt_uniq
+  $baseDir/bin/merge.stats.R --opt featurecounts -o featurecounts.multi.rds $fcnt_multi
   """
 }
 
