@@ -39,7 +39,7 @@ process aln {
   script:
   """
   minimap2 -x asm20 -a -t ${task.cpus} \\
-    ${tfas} ${qfas} | \\
+    ${tfas} ${qfas} | samtools view -T $tfas -h - | \\
     sam.py 2psl - ${qfas.baseName}.psl
   """
 }
@@ -74,14 +74,14 @@ process chain {
   publishDir "${params.outdir}/${qry}-${tgt}", mode:'copy', overwrite: true
 
   input:
-  tuple val(qry), val(tgt), path(psl), path('q.sizes'), path('q.2bit'), path('t.sizes'), path('t.2bit')
+  tuple val(qry), val(tgt), path(psl), path('q.sizes'), path('q.fa'), path('t.sizes'), path('t.fa')
 
   output:
   tuple val(qry), val(tgt), path("15.chain")
 
   script:
   """
-  axtChain -linearGap=medium -psl $psl t.2bit q.2bit 10.chain
+  axtChain -linearGap=medium -psl $psl -faT -faQ t.fa q.fa 10.chain
   chainPreNet 10.chain t.sizes q.sizes 11.chain
   chainSwap 11.chain 11.q.chain
   chainNet 11.chain t.sizes q.sizes 13.t.net 13.q.net
@@ -173,8 +173,8 @@ workflow wgc {
       .map {r -> [r[1],r[0],r[2],r[3],r[4]]}
     merge(in2)
     in3 = merge.out
-      .combine(qry_sizes,by:0).combine(qry_2bit,by:0)
-      .combine(tgt_sizes1,by:1).combine(tgt_2bit,by:0)
+      .combine(qry_sizes,by:0).combine(qry_fas,by:0)
+      .combine(tgt_sizes1,by:1).combine(tgt_fas,by:0)
       .map {r -> [r[1],r[0],r[2],r[3],r[4],r[5],r[6]]}
     chain(in3)
     in4 = chain.out

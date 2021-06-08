@@ -146,7 +146,7 @@ process i_blat {
 
   script:
   """
-  faToTwoBit $ref db.2bit
+  faToTwoBit -long $ref db.2bit
   blat db.2bit tmp.fas tmp.out -makeOoc=db.2bit.tile11.ooc
   """
 }
