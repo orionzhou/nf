@@ -29,7 +29,7 @@ process hs2 {
     strandness = paired == 'SE' ? '--rna-strandness R' : '--rna-strandness RF'
   }
   input = paired == 'PE' ? "-1 ${reads[0]} -2 ${reads[1]}" : "-U ${reads}"
-  extra = params.cage ? "--sp 1,0.1 --score-min L,0,-2" : ""
+  extra = ""//params.cage ? "--sp 1,0.1 --score-min L,0,-2" : ""
   // unaligned = params.save_unmapped ? !paired ? "--un-gz unmapped.hisat2.gz" : "--un-conc-gz unmapped.hisat2.gz" : ''
   // --dta --no-mixed --no-discordant
   // --known-splicesite-infile $splicesites \\

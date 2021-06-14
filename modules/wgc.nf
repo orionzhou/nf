@@ -13,9 +13,9 @@ process prep_qry {
   """
   bed.py filter -min 5000 ${gap} > 01.qry.gap.bed
   subtractBed -nonamecheck -sorted -a ${gbed} \
-      -b ${gap} | bed.py filter -min 100 - | \
-      bed.py makewindow -w 1000000 -s 995000 - \
-      > 02.qry.clean.bed
+    -b ${gap} | bed.py filter -min 100 - | \
+    bed.py makewindow -w 1000000 -s 995000 - \
+    > 02.qry.clean.bed
   bed.py size 02.qry.clean.bed
   bed.py binpacking 02.qry.clean.bed 03.bed ${qry}_split --N ${params.npieces} --pre p
   cut -f1,3 03.bed > 03.sizes
@@ -98,6 +98,7 @@ process post {
   label 'mid_memory'
   tag "${params.genomes[qry].alias}-${params.genomes[tgt].alias}"
   publishDir "${params.outdir}/${qry}-${tgt}", mode:'copy', overwrite: true
+  //conda "$NXF_CONDA_CACHEDIR/genome"
 
   input:
   tuple val(qry), val(tgt), path(fi), path('q.fas'), path('q.sizes'), path('q.ref'), path('t.fas'), path('t.sizes'), path('t.ref')
