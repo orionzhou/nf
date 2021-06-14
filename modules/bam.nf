@@ -15,7 +15,7 @@ process bamsort {
   def avail_mem = (task.memory && suff_mem) ? "-m" + "${(task.memory.toBytes() - 6000000000) / task.cpus}" : ''
   """
   bam.py sort ${id}.sorted.bam ${ibams} \\
-    --tmpdir ${TMPDIR} --threads ${task.cpus}
+    --tmpdir ${NXF_TEMP} --threads ${task.cpus}
   """
 }
 
