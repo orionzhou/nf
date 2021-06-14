@@ -1,5 +1,0 @@
-SampleID	Tissue	Genotype	Treatment	Replicate	source	paired	spots	avgLength	r0	r1	r2
-s01	leaf	B73	bundle-sheath	1	sra	SE	9075105.0	35.0	SRR039512		
-s02	leaf	Ki11		1	sra	PE	11271601.0	100.0	SRR651063		
-s03	root	B73		1	local	SE			/home/springer/zhoux379/projects/barn/Zmays_B73/raw_seqs/cage/B73_root_SRR2078287.fq.gz		
-s04	blade_leaf	B73	v12	1	local	PE				/home/springer/data_release/umgc/hiseq/170127_D00635_0197_ACAC47ANXX/Springer_Project_052_Run1_Redemux/briggs_pool1_18_Index2_S2_R1_001.fastq	/home/springer/data_release/umgc/hiseq/170127_D00635_0197_ACAC47ANXX/Springer_Project_052_Run1_Redemux/briggs_pool1_18_Index2_S2_R2_001.fastq

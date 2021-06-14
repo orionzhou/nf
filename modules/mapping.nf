@@ -246,7 +246,7 @@ workflow aln {
       gtf = Channel.fromPath(params.gtf, checkIfExists: true)
          .ifEmpty { exit 1, "GTF annotation file not found: ${params.gtf}" }
       star_index = Channel
-        .fromPath(params.star_index.replaceAll("/$", ""), checkIfExists: true)
+        .fromPath(params.star_index.replaceAll("\\/+\$", ""), checkIfExists: true)
         .ifEmpty { exit 1, "STAR index not found: ${params.star_index}" }
       star(reads.combine(star_index).combine(gtf))
       aln = star.out

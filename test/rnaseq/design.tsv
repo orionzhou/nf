@@ -1,0 +1,4 @@
+SampleID	Tissue	Genotype	Treatment	Replicate	paired	r0	r1	r2
+s09	root	B73		1	SE	/datalus/weiyu/projects/s3/zhoup-barn/zm.cg20a/B73_root_r1.fq.gz		
+s12	shoot	B73		1	SE	/datalus/weiyu/projects/s3/zhoup-barn/zm.cg20a/B73_shoot_r1.fq.gz		
+s20	shoot	A632		2	SE	/datalus/weiyu/projects/s3/zhoup-barn/zm.cg20a/Mo17_shoot_r2.fq.gz		
