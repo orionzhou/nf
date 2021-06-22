@@ -113,10 +113,10 @@ process qmap {
   script:
   def drc = params.stranded=='no' ? 'non-strand-specific' : params.stranded=='reverse' ? 'strand-specific-reverse' : 'strand-specific-forward'
   def pair_str = paired == 'PE' ? '-pe' : ''
-  memory = task.memory.toGiga() + "G"
+  memory = (task.memory.toGiga() - 3) + "G"//--java-mem-size=${memory} 
   """
   unset DISPLAY
-  qualimap --java-mem-size=${memory} rnaseq -p $drc $pair_str \\
+  qualimap rnaseq -p $drc $pair_str \\
     -bam $bam -gtf $gtf -outdir ${id}
   """
 }
@@ -203,6 +203,7 @@ process corr {
   label 'low_memory'
   tag "${params.name}"
   publishDir "${params.outdir}/33_sample_correlation", mode:'copy', overwrite:'true'
+  conda "$NXF_CONDA_CACHEDIR/genome"
 
   when:
   !params.skip_qc && !params.skip_edger

@@ -39,12 +39,14 @@ def tsv2yml(args):
             jd1['macs_gsize'] = get_gsize(jd1['genome_sizes'])
         # annotation
         jd1['gff'] = "%s/50_annotation/10.gff" % pre
+        jd1['gff_db'] = "%s/50_annotation/10.gff.db" % pre
         jd1['gtf'] = "%s/50_annotation/10.gtf" % pre
         jd1['bed'] = "%s/50_annotation/10.bed" % pre
         jd1['fna'] = "%s/50_annotation/10.nt.fasta" % pre
         jd1['faa'] = "%s/50_annotation/10.aa.fasta" % pre
         jd1['tss'] = "%s/50_annotation/10.tss.bed" % pre
         jd1['pgff'] = "%s/50_annotation/15.gff" % pre
+        jd1['pgff_db'] = "%s/50_annotation/15.gff.db" % pre
         jd1['pgtf'] = "%s/50_annotation/15.gtf" % pre
         jd1['pbed'] = "%s/50_annotation/15.bed" % pre
         jd1['pfna'] = "%s/50_annotation/15.nt.fasta" % pre
