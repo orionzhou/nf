@@ -372,6 +372,27 @@ process i_hisat2 {
   """
 }
 
+process i_bowtie2 {
+  label 'low_memory'
+  tag "${params.genomes[id].alias}"
+  publishDir "${params.outdir}/$id/21_dbs", mode:"copy", overwrite:'true'
+
+  when: tag == 'T'
+
+  input:
+  tuple val(id), path(ref), path(fai), val(tag)
+
+  output:
+  tuple val(id), val(pre), path("bowtie2/*")
+
+  script:
+  pre = "bowtie2/db"
+  """
+  mkdir bowtie2
+  bowtie2-build --threads ${task.cpus} $ref bowtie2/db
+  """
+}
+
 process i_snpeff {
   label 'low_memory'
   tag "${params.genomes[id].alias}"

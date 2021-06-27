@@ -73,8 +73,8 @@ prep_params(params, workflow)
       .map {r -> [r[0], file(r[1].pfaa, checkIfExists:true)]}
     tgt_pbed = tgts
       .map {r -> [r[0], file(r[1].pbed, checkIfExists:true)]}
-  //tgt_blastp = tgts
-    //.map {r -> [r[0], file(r[1].blastp, checkIfExists:true)]}
+  tgt_blastp = tgts
+    .map {r -> [r[0], file(r[1].blastp, checkIfExists:true)]}
 
 include {wgc} from '../modules/wgc.nf'
 include {syn} from '../modules/syntelog.nf'
