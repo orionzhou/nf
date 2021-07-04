@@ -185,7 +185,7 @@ def prepare_ml(args):
     fmt = args.fmt
     pre = f"tmp.pm{random.randrange(1000)}"
     sh(f"sed '1d' {fg} |cut -f1 > {pre}_0.txt")
-    sh(f"fasta.py extract --list {db} {pre}_0.txt > {pre}_1.fas")
+    sh(f"fasta.py extract --list {db} {pre}_0.txt {pre}_1.fas")
     debug = '--debug' if args.debug else ''
     sh(f"fimo.py locate {debug} --motif {nfea} {fm} --score_thresh {args.score_thresh} --motif_frac {args.motif_frac} {pre}_1.fas {pre}_2.bed")
     sh("bioawk -t '{split($1,a,/%%/); print a[2], $2, $3, a[1]}' %s_2.bed | sort -k1,1 -k2,2n -k3,3n > %s_3.bed" % (pre, pre))
