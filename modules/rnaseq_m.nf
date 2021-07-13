@@ -14,7 +14,7 @@ process cage_gtf {
   tuple val(genome), path("gene.gtf")
 
   script:
-	left = 1000
+	left = 0
 	right = 0
   """
 	bioawk -t '{if(\$3=="gene") {split(\$9, a, ";"); split(a[1],b,"="); print \$1, \$4-1, \$5, b[2], ".", \$7}}' $gtf > gene.bed

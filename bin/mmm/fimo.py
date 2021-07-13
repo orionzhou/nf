@@ -99,7 +99,7 @@ def locate(args):
     mtf_str = " ".join([f'--motif {mid}' for mid,wd,score in mtfs])
     pre = f"tmp.lc{random.randrange(1000)}"
     #
-    sh(f'fimo --bfile --motif-- {mtf_str} --thresh 1e-4 --skip-matched-sequence --text {fi} {seq} > {pre}_0.txt')
+    sh(f'fimo --bfile --motif-- {mtf_str} --thresh {args.eval} --skip-matched-sequence --text {fi} {seq} > {pre}_0.txt')
     for mid,wd,score in mtfs:
         sh(f'grep -P "^{mid}\t" {pre}_0.txt > {pre}_0a.txt')
         #
@@ -213,6 +213,7 @@ if __name__ == "__main__":
     sp1.add_argument('fo', help = 'output file')
     sp1.add_argument('--motif', default='all', help = 'motif ID / option')
     sp1.add_argument('--score_thresh', type=float, default=0.7, help = 'minimum (relative) score threshold')
+    sp1.add_argument('--eval', type=float, default=1e-4, help = 'minimum (relative) score threshold')
     sp1.add_argument('--motif_frac', type=float, default=0.8, help = 'fraction of motif to be counted')
     sp1.add_argument('--debug', action='store_true', help = 'do not delete temporary files')
     sp1.set_defaults(func = locate)

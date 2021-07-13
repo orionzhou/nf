@@ -62,6 +62,22 @@ def is_perfect_match(aln):
     else:
         return False
 
+def read_stat(args):
+    bam = pysam.AlignmentFile(args.fi, 'r')
+    fho = open(args.fo, "w")
+    fho.write(f"read\tnh\tmapq\tlclip\trclip\tmatch\tmismatch\n")
+    read, nh, mapq, lclip, rclip, mat, mm = '', 0, 0, 0, 0, 0, 0
+    for aln in bam:
+        if aln.is_secondary: continue
+        read = aln.query_name
+        mapq = aln.mapping_quality
+        nts, bks = aln.get_cigar_stats()
+        mat,i,d,clip,mm = nts[0],nts[1],nts[2],nts[4],nts[10]
+        if aln.has_tag("NH"): nh = aln.get_tag("NH")
+        if aln.has_tag("nM"): mm = aln.get_tag("nM")
+        fho.write(f"{read}\t{nh}\t{mapq}\t{clip}\t0\t{mat-mm}\t{mm}\n")
+    fho.close()
+
 def bam_stat(args):
     bam = pysam.AlignmentFile(args.fi, 'r')
 
@@ -104,15 +120,16 @@ def bam_sort(args):
         fos.append(fo)
 
     if len(fos) == 1:
-        sh("mv %s %s"% (fos[0], args.fo))
+        sh(f"mv {fos[0]} {args.fo}")
+        sh(f"mv {fos[0]}.bai {args.fo}.bai")
     else:
         bam_str = ' '.join(fos)
         sh("sambamba merge -t %d %s %s" % (args.threads, args.fo, bam_str))
-        bam_str = ' '.join([x + '*' for x in fos])
-        sh("rm %s" % bam_str)
+        bam_str = ' '.join([f"{x}*" for x in fos])
+        sh(f"rm {bam_str}")
 
     if args.order != 'name':
-        sh("samtools index %s" % args.fo)
+        sh("samtools index -c %s" % args.fo)
 
 def count_read(aln, s):
     if aln.is_secondary or aln.is_supplementary:
@@ -215,7 +232,7 @@ def bam_filter(args):
         if not pm and mq >= 20:
             obam.write(aln)
             cu += 1
-    print("%d hq reads with mismatches" % cu) 
+    print("%d hq reads with mismatches" % cu)
 
 def bam_binstat(args):
     bam = pysam.AlignmentFile(args.fi)
@@ -289,6 +306,15 @@ if __name__ == "__main__":
     sp1.add_argument('--mq', default=1, help='mapping quality threshold- 1: 20, 2: 10')
     sp1.set_defaults(func = bam_binstat)
 
+    sp1 = sp.add_parser("read_stat",
+            formatter_class = argparse.ArgumentDefaultsHelpFormatter,
+            help = 'output per-read mapping detail'
+    )
+    sp1.add_argument('fi', help='input SAM/BAM file')
+    sp1.add_argument('fo', help='output tsv file')
+    sp1.set_defaults(func = read_stat)
+
+    args = parser.parse_args()
     args = parser.parse_args()
     if args.command:
         args.func(args)
